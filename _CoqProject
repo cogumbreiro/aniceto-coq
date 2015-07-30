@@ -1,17 +1,17 @@
--R . Aniceto
+-R src Aniceto
 
-Graphs/Bipartite/Core.v
-Graphs/Bipartite/Cycle.v
-Graphs/Bipartite/Main.v
-Graphs/Core.v
-Graphs/FGraphs.v
-Graphs/Main.v
-ListSet.v
-List.v
-Map.v
-Option.v
-Pair.v
-Project.v
-Set.v
-Sig.v
-Tactics.v
+src/Graphs/Bipartite/Core.v
+src/Graphs/Bipartite/Cycle.v
+src/Graphs/Bipartite/Main.v
+src/Graphs/Core.v
+src/Graphs/FGraphs.v
+src/Graphs/Main.v
+src/ListSet.v
+src/List.v
+src/Map.v
+src/Option.v
+src/Pair.v
+src/Project.v
+src/Set.v
+src/Sig.v
+src/Tactics.v
