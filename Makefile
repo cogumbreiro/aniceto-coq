@@ -24,5 +24,8 @@ clean:
 	pdflatex $<
 
 userinstall: Makefile.coq
-	@(if test -z "$$DSTROOT"; then echo "Variable DSTROOT is undefined"; exit -1; fi)
-	$(MAKE) -f $< DSTROOT=$(DSTROOT) COQLIBINSTALL= install
+	@(if test -z "$$PREFIX"; then echo "Variable PREFIX is undefined"; exit -1; fi)
+	$(MAKE) -f $< DSTROOT=$(PREFIX) COQLIBINSTALL= install
+
+install: Makefile.coq
+	$(MAKE) -f $< install
