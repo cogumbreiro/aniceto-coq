@@ -1,8 +1,8 @@
 Require Import Coq.FSets.FMapFacts.
 Require Import Coq.FSets.FSetProperties.
-Require Import SetUtil.
-Require Import MapUtil.
-Require Import ListUtil.
+Require Import Aniceto.Set.
+Require Import Aniceto.Map.
+Require Import Aniceto.List.
 
 Set Implicit Arguments.
 

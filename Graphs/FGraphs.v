@@ -1,11 +1,12 @@
-Require Import Lists.List.
-Require Import Lists.ListSet.
-Require Import Graphs.Core.
-Require Import PairUtil.
-Require Import ListUtil.
-Require Import Bool.
-Require Import SigUtil.
-Require Import ListSetUtil.
+Require Import Coq.Lists.List.
+Require Import Coq.Lists.ListSet.
+Require Import Coq.Bool.Bool.
+
+Require Import Aniceto.Graphs.Core.
+Require Import Aniceto.Pair.
+Require Import Aniceto.List.
+Require Import Aniceto.Sig.
+Require Import Aniceto.ListSet.
 
 Set Implicit Arguments.
 
@@ -911,7 +912,7 @@ Qed.
 
 Definition prepend (w:list edge) (g:fgraph) : option edge :=
   match w with
-    | e :: _ => 
+    | e :: _ =>
       match (get_incoming g (fst e)) with
         | e :: _ => Some e
         | nil => None
@@ -1276,7 +1277,7 @@ Definition build_cycle: forall (w:WalkOf) (v:BuildCycle (Sig_take w)), CycleOf.
 Proof.
   intros.
   destruct w as (w, (H1, H2)).
-  destruct v as (v, (H3, H4)). 
+  destruct v as (v, (H3, H4)).
   refine (Sig_yes (cut v w)).
   apply cycle_def2 with (v:=v).
   apply cut_starts_with; assumption.
@@ -1336,7 +1337,7 @@ Proof.
     simpl in e.
     remember (get_incoming g (fst e0)).
     destruct l.
-    + 
+    +
     apply all_incoming_in with (v:=fst e0) in H.
     rewrite has_incoming_neq_nil in H.
     contradiction H; auto.

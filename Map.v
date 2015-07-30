@@ -1,7 +1,7 @@
 Require Coq.FSets.FMapFacts.
 Require Coq.FSets.FMapInterface.
 Require Import Coq.Lists.SetoidList.
-Require ListUtil.
+Require Aniceto.List.
 
 Lemma ina_to_in:
   forall {A:Type} (x:A) l,
@@ -36,7 +36,7 @@ Module MapUtil (Import M:FMapInterface.WS).
     exists e.
     assumption.
   Qed.
-  
+
   Lemma in_to_mapsto : forall (elt:Type) m x,
     In x m -> exists (e:elt), MapsTo x e m.
   Proof.
@@ -44,7 +44,7 @@ Module MapUtil (Import M:FMapInterface.WS).
     unfold In in H.
     assumption.
   Qed.
-  
+
   Lemma add_neq_mapsto:
     forall {elt:Type} k k' e (e':elt) m,
     ~ E.eq k k' ->
@@ -238,7 +238,7 @@ Module MapUtil (Import M:FMapInterface.WS).
     rewrite k_eq.
     intuition.
   Qed.
-  
+
   Lemma in_elements_to_in:
     forall {elt:Type} k e (m: t elt),
     List.In (k, e) (elements m) ->
@@ -280,12 +280,12 @@ Module MapUtil (Import M:FMapInterface.WS).
      apply of_list_1; auto.
      apply in_to_ina_eq_key_elt; repeat auto.
  Qed.
-    
+
 
   Lemma to_list_of_list
     {elt:Type}
     (k_eq: forall k k', E.eq k k' <-> k = k'):
-    forall (k:E.t) (v:elt) (l:list (E.t * elt)), 
+    forall (k:E.t) (v:elt) (l:list (E.t * elt)),
     NoDupA (eq_key (elt:=elt)) l ->
     List.In (k, v) l ->
     List.In (k, v) (to_list (of_list l)).
@@ -382,7 +382,7 @@ Module MapUtil (Import M:FMapInterface.WS).
 
   Definition filter {elt:Type} (f: key -> elt -> bool) (m:t elt) : t elt :=
     of_list (filter_elements (fun p => let (k, e) := p in f k e) m).
-  
+
   Lemma filter_spec
       {elt:Type}
       (k_eq: forall k k', E.eq k k' <-> k = k'):
@@ -421,7 +421,7 @@ Module MapUtil (Import M:FMapInterface.WS).
       assumption.
       auto.
   Qed.
-  
+
   Definition keys {elt:Type} (m:t elt) : list key :=  fst (split (elements m)).
 
   Lemma keys_spec_1:
@@ -430,7 +430,7 @@ Module MapUtil (Import M:FMapInterface.WS).
   Proof.
     intros.
     unfold keys in *.
-    apply ListUtil.in_fst_split in H.
+    apply List.in_fst_split in H.
     destruct H as (e, H).
     apply in_elements_to_in with (e0:=e).
     assumption.
@@ -438,7 +438,7 @@ Module MapUtil (Import M:FMapInterface.WS).
 
   Lemma keys_spec_2:
     forall {elt:Type} (m:t elt) (k:key),
-    In k m -> 
+    In k m ->
     exists k', E.eq k k' /\ List.In k' (keys m).
   Proof.
     intros.
@@ -464,10 +464,10 @@ Module MapUtil (Import M:FMapInterface.WS).
       assumption.
     - apply keys_spec_1.
   Qed.
-  
+
   Lemma ina_fst_split_alt:
     forall {elt:Type} (k:key) (e:elt) (l:list (key*elt)%type),
-    InA E.eq k (fst (ListUtil.split_alt l)) ->
+    InA E.eq k (fst (List.split_alt l)) ->
     InA (eq_key (elt:=elt)) (k, e) l.
   Proof.
     intros.
@@ -483,7 +483,7 @@ Module MapUtil (Import M:FMapInterface.WS).
         apply InA_cons_hd.
         unfold eq_key.
         auto.
-      + 
+      +
         destruct a as (k', e').
         simpl in *.
         inversion H0.
@@ -505,13 +505,13 @@ Module MapUtil (Import M:FMapInterface.WS).
       subst.
       apply IHl in H3; clear IHl.
       destruct a as (k,e).
-      rewrite ListUtil.split_alt_spec.
+      rewrite List.split_alt_spec.
       simpl.
       apply NoDupA_cons.
       + intuition.
         apply ina_fst_split_alt with (e0:=e) in H.
         contradiction H.
-      + rewrite ListUtil.split_alt_spec in H3.
+      + rewrite List.split_alt_spec in H3.
         assumption.
   Qed.
 
@@ -531,13 +531,13 @@ Module MapUtil (Import M:FMapInterface.WS).
   Proof.
     intros.
     assert (Hx := keys_nodupa m).
-    apply ListUtil.nodupa_nodup_iff in Hx.
+    apply List.nodupa_nodup_iff in Hx.
     assumption.
     apply k_eq.
   Qed.
-    
+
   Definition values {elt:Type} (m:t elt) : list elt :=  snd (split (elements m)).
-  
+
   Lemma values_spec_1:
     forall {elt:Type} (m:t elt) (e:elt),
     List.In e (values m) ->
@@ -545,13 +545,13 @@ Module MapUtil (Import M:FMapInterface.WS).
   Proof.
     intros.
     unfold values in *.
-    apply ListUtil.in_snd_split in H.
+    apply List.in_snd_split in H.
     destruct H as (k, Hin).
     apply in_elements_impl_maps_to in Hin.
     exists k.
     assumption.
   Qed.
-  
+
   Lemma values_spec_2:
     forall {elt:Type} (m:t elt) (k:key) (e:elt),
     MapsTo k e m ->
@@ -565,7 +565,7 @@ Module MapUtil (Import M:FMapInterface.WS).
     simpl in *.
     assumption.
   Qed.
-  
+
   Lemma values_spec:
     forall {elt:Type} (m:t elt) (e:elt),
     List.In e (values m) <-> exists k, MapsTo k e m.
@@ -578,5 +578,5 @@ Module MapUtil (Import M:FMapInterface.WS).
     apply values_spec_2 with (k0:=k).
     assumption.
   Qed.
-  
+
 End MapUtil.

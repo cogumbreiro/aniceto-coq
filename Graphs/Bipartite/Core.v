@@ -1,4 +1,5 @@
-Require Import Graphs.Core TacticsUtil.
+Require Import Aniceto.Graphs.Core
+               Aniceto.Tactics.
 
 Section Bipartite.
 Variable a_vertex:Type.
@@ -168,7 +169,7 @@ Proof.
   intros.
   unfold BAB.
   apply_auto b_edge_to_bi_edge.
-Qed.    
+Qed.
 
 Lemma aba_to_aa :
   forall a1 b a2,
@@ -189,7 +190,7 @@ Proof.
   intros.
   unfold ABA.
   apply_auto a_edge_to_bi_edge.
-Qed.    
+Qed.
 
 Lemma bab_to_aba:
   forall b1 a1 b2 a2 b3,
@@ -282,7 +283,7 @@ Proof.
   apply aba_to_bab with (a1:=a1) (a3:=a3); r_auto.
   apply bab_to_b in H2; r_auto.
 Qed.
- 
+
 Lemma edge_a_to_b_total:
   forall a1 a2 a3,
   AA (a1, a2) ->
@@ -332,7 +333,7 @@ Proof.
   exists nil.
   intuition.
   apply t_to_b_edge_nil.
-  apply walk_nil.  
+  apply walk_nil.
 Qed.
 
 Lemma a_walk_to_edge_a_to_b:
@@ -505,7 +506,7 @@ Lemma a_to_b_step:
   a_to_b aw ((b1,b2)::bw) ->
   BWalk ((b1,b2)::bw) ->
   exists a1 a2 a3 aw',
-  (aw = ((a1,a2)::(a2,a3)::aw')%list /\ 
+  (aw = ((a1,a2)::(a2,a3)::aw')%list /\
   ABA a1 b1 a2 /\ ABA a2 b2 a3).
 Proof.
   intros.

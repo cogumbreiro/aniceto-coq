@@ -1,8 +1,8 @@
 Require Import
   Coq.Lists.List.
 
-Require Import TacticsUtil.
-Require Import PairUtil.
+Require Import Aniceto.Tactics.
+Require Import Aniceto.Pair.
 
 Set Implicit Arguments.
 
@@ -749,7 +749,7 @@ Proof.
   apply starts_with_eq in H0.
   inversion H2.
   subst.
-  intuition.  
+  intuition.
 Qed.
 
 Lemma walk2_inv:
@@ -850,7 +850,7 @@ Lemma walk2_to_forall:
 Proof.
   intros.
   inversion H.
-  apply walk_to_forall; 
+  apply walk_to_forall;
   auto.
 Qed.
 
@@ -907,7 +907,7 @@ Notation edge := (A*A)%type.
 Definition subgraph (E E':edge -> Prop) :=
   forall e,
   E e ->
-  E' e.  
+  E' e.
 
 Lemma subgraph_edge:
   forall (E E':edge -> Prop) e,
@@ -994,7 +994,7 @@ Proof.
   assumption.
 Qed.
 
-Definition Forall (E:edge -> Prop) (P: A -> Prop) := 
+Definition Forall (E:edge -> Prop) (P: A -> Prop) :=
   forall (v:A), In E v -> P v.
 
 Lemma subgraph_forall:

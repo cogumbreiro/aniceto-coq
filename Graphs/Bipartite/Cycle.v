@@ -1,11 +1,13 @@
 Require
-  Graphs.Bipartite.Core
-  Graphs.Bipartite.Main.
+  Aniceto.Graphs.Bipartite.Core
+  Aniceto.Graphs.Bipartite.Main.
 
-Module C := Graphs.Bipartite.Core.
-Module M := Graphs.Bipartite.Main.
+Module C := Aniceto.Graphs.Bipartite.Core.
+Module M := Aniceto.Graphs.Bipartite.Main.
 
-Require Import TacticsUtil Graphs.Core.
+Require Import
+  Aniceto.Tactics
+  Aniceto.Graphs.Core.
 
 Section CycleAAtoBB.
 Variable A : Type.
@@ -97,7 +99,7 @@ Proof.
   exists nil.
   intuition.
   apply t_to_b_edge_nil.
-  apply walk_nil.  
+  apply walk_nil.
 Qed.
 
 Lemma a_walk_to_edge_a_to_b:
@@ -270,7 +272,7 @@ Lemma a_to_b_step:
   a_to_b aw ((b1,b2)::bw)%list ->
   BWalk ((b1,b2)::bw) ->
   exists a1 a2 a3 aw',
-  (aw = ((a1,a2)::(a2,a3)::aw')%list /\ 
+  (aw = ((a1,a2)::(a2,a3)::aw')%list /\
   ABA a1 b1 a2 /\ ABA a2 b2 a3).
 Proof.
   intros.
@@ -431,7 +433,7 @@ End CycleAAtoBB.
 
 Definition cycle_a_to_cycle_b := fun (bp:M.Bipartite) =>
   cycle_a_to_b
-    (M.vertex_a bp) 
+    (M.vertex_a bp)
     (M.vertex_b bp)
     (M.AB bp)
     (M.BA bp).
