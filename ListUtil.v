@@ -1,7 +1,7 @@
-Require Import Lists.ListSet.
-Require Import Lists.List.
-Require Import Bool.
-Require Import Recdef. (* Required by Function *)
+Require Import Coq.Lists.ListSet.
+Require Import Coq.Lists.List.
+Require Import Coq.Bool.Bool.
+Require Import Coq.funind.Recdef. (* Required by Function *)
 Require Import Coq.Arith.Wf_nat. (* Required implicitly by measure obligations *)
 
 Section LISTS.
@@ -193,7 +193,7 @@ Variable f : list A -> A -> bool.
 
 Function feedback_filter (l:list A) {measure length l} :=
   let fl := filter (f l) l in
-  if list_eq_dec eq_dec l fl then l 
+  if list_eq_dec eq_dec l fl then l
   else feedback_filter fl.
 Proof.
   intros.
@@ -653,7 +653,7 @@ Section INA_IN.
         apply IHl.
         assumption.
   Qed.
-  
+
   Lemma ina_in_iff:
     forall {A:Type} (P: A -> A -> Prop) (P_eq: forall x y, P x y <-> x = y) (a:A) l,
     InA P a l <-> List.In a l.
@@ -702,7 +702,7 @@ Section NODUPA_NODUP.
       assumption.
       assumption.
   Qed.
-  
+
   Lemma nodupa_nodup_iff:
     forall {A:Type} (P: A -> A -> Prop) (P_eq: forall x y, P x y <-> x = y) l,
     NoDupA P l <-> NoDup l.
