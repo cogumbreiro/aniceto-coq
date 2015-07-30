@@ -322,6 +322,14 @@ Proof.
   assumption.
 Qed.
 
+Inductive Walk2: A -> A -> list edge -> Prop :=
+  walk2_def:
+    forall v1 v2 w,
+    StartsWith w v1 ->
+    EndsWith w v2 ->
+    Walk w ->
+    Walk2 v1 v2 w.
+
 Inductive Cycle: walk -> Prop :=
   cycle_def:
     forall v1 v2 vn w,
