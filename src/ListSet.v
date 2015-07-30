@@ -1,7 +1,7 @@
 Set Implicit Arguments.
 
-Require Import Lists.ListSet.
-Require Import Lists.List.
+Require Import Coq.Lists.ListSet.
+Require Import Coq.Lists.List.
 Require Import Coq.Sorting.Permutation.
 Section LISTS.
 
