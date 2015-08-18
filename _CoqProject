@@ -1,11 +1,9 @@
 -R src Aniceto
 
-src/Graphs/Bipartite/Core.v
+src/Graphs/Bipartite/Bipartite.v
 src/Graphs/Bipartite/Cycle.v
-src/Graphs/Bipartite/Main.v
-src/Graphs/Core.v
-src/Graphs/FGraphs.v
-src/Graphs/Main.v
+src/Graphs/Graph.v
+src/Graphs/FGraph.v
 src/ListSet.v
 src/List.v
 src/Map.v

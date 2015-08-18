@@ -1,13 +1,10 @@
-Require
-  Aniceto.Graphs.Bipartite.Core
-  Aniceto.Graphs.Bipartite.Main.
+Require Aniceto.Graphs.Bipartite.Bipartite.
 
-Module C := Aniceto.Graphs.Bipartite.Core.
-Module M := Aniceto.Graphs.Bipartite.Main.
+Module C := Aniceto.Graphs.Bipartite.Bipartite.
 
-Require Import
-  Aniceto.Tactics
-  Aniceto.Graphs.Core.
+Require Import Aniceto.Graphs.Graph.
+
+Set Implicit Arguments.
 
 Section CycleAAtoBB.
 Variable A : Type.
@@ -15,20 +12,18 @@ Variable B : Type.
 Variable AB : A -> B -> Prop.
 Variable BA : B -> A -> Prop.
 
-Let G := M.mk_bipartite A B AB BA.
-
-Notation b_edge := (M.b_edge G).
-Notation a_edge := (M.a_edge G).
-Notation a_walk := (M.a_walk G).
-Notation b_walk := (M.b_walk G).
-Notation BWalk := (M.BWalk G).
-Notation AWalk := (M.AWalk G).
-Notation ACycle := (M.ACycle G).
-Notation BCycle := (M.BCycle G).
-Notation ABA := (M.ABA G).
-Notation BAB := (M.BAB G).
-Notation BB := (M.BB G).
-Notation AA := (M.AA G).
+Notation b_edge := (B * B) % type.
+Notation a_edge := (A * A) % type.
+Notation a_walk := (list a_edge).
+Notation b_walk := (list b_edge).
+Notation AA := (Bipartite.AA AB BA).
+Notation BB := (Bipartite.BB AB BA).
+Notation BWalk := (Walk BB).
+Notation AWalk := (Walk AA).
+Notation ACycle := (Cycle AA).
+Notation BCycle := (Cycle BB).
+Notation ABA := (Bipartite.ABA AB BA).
+Notation BAB := (Bipartite.BAB AB BA).
 
 Inductive edge_a_to_b : a_edge -> a_edge -> b_edge -> Prop :=
   edge_a_to_b_def:
@@ -45,9 +40,7 @@ Proof.
   intros.
   inversion H.
   subst.
-  assert (H2: BAB b1 a2 b2).
-  apply C.aba_to_bab with (a1:=a1) (a3:=a3); r_auto.
-  apply C.bab_to_b in H2; r_auto.
+  eauto using C.bab_to_b, C.aba_to_bab.
 Qed.
 
 Lemma edge_a_to_b_total:
@@ -65,9 +58,7 @@ Proof.
   exists b1.
   exists b2.
   intuition.
-  apply edge_a_to_b_def.
-  apply_auto C.ab_ba_to_aba.
-  apply_auto C.ba_ab_to_bab.
+  auto using edge_a_to_b_def, C.ab_ba_to_aba, C.ba_ab_to_bab.
 Qed.
 
 Inductive a_to_b : a_walk -> b_walk -> Prop :=
@@ -87,8 +78,8 @@ Lemma a_to_b_total_nil:
 Proof.
   exists nil.
   intuition.
-  apply a_to_b_nil.
-  apply walk_nil.
+  - apply a_to_b_nil.
+  - apply walk_nil.
 Qed.
 
 Lemma a_to_b_total_edge:
@@ -110,7 +101,7 @@ Proof.
   intros.
   inversion H; subst.
   inversion H2; subst.
-  apply_auto edge_a_to_b_total.
+  auto using edge_a_to_b_total.
 Qed.
 
 Lemma edge_a_to_b_inv1:
@@ -137,7 +128,7 @@ Lemma edge_a_to_b_inv3:
   BAB b1 a2 b2.
 Proof.
   intros. inversion H.
-  apply C.aba_to_bab with (a1:=a1) (a3:=a3); r_auto.
+  eauto using C.aba_to_bab.
 Qed.
 
 Lemma edge_t_to_to_a_to_b:
@@ -147,9 +138,7 @@ Lemma edge_t_to_to_a_to_b:
 Proof.
   intros.
   inversion H.
-  apply a_to_b_cons.
-  apply t_to_b_edge_nil.
-  apply edge_a_to_b_def; r_auto.
+  auto using a_to_b_cons, t_to_b_edge_nil, edge_a_to_b_def.
 Qed.
 
 Lemma b_walk_cons_trt:
@@ -163,7 +152,7 @@ Proof.
   inversion H0; subst.
   apply walk_cons.
   - assumption.
-  - apply C.aba_to_b with (a1:=a1) (a2:=a2) (a3:=a3); r_auto.
+  - eauto using C.aba_to_b.
   - compute; auto.
 Qed.
 
@@ -177,9 +166,7 @@ Lemma a_to_b_cons_trt:
   ((b1, b2) :: ((b2, b3) :: bw)%list)%list.
 Proof.
   intros.
-  assert (H5': edge_a_to_b (a1, a2) (a2, a3) (b1, b2)).
-  * apply_auto edge_a_to_b_def.
-  * apply_auto a_to_b_cons.
+  eauto using edge_a_to_b_def, a_to_b_cons.
 Qed.
 
 Lemma a_to_b_b_walk_cons:
@@ -196,9 +183,9 @@ Lemma a_to_b_b_walk_cons:
   BWalk ((b1, b2) :: ((b2, b3) :: bw)%list).
 Proof.
   intuition.
-  + apply_auto a_to_b_cons_trt.
+  + auto using a_to_b_cons_trt.
   + apply edge_a_to_b_inv1 in H2.
-    apply b_walk_cons_trt with (a1:=a1) (a2:=a2) (a3:=a3); r_auto.
+    eauto using b_walk_cons_trt.
 Qed.
 
 Lemma edge_a_to_b_to_b_walk:
@@ -234,15 +221,15 @@ Proof.
     destruct Hr as (b1, (b2, Hr)).
     exists (cons (b1, b2) nil).
     intuition.
-    + apply_auto a_to_b_cons.
-    + apply edge_a_to_b_to_b_walk with (a1:=a1) (a2:=a2) (a3:=a3); r_auto.
+    + auto using a_to_b_cons.
+    + eauto using edge_a_to_b_to_b_walk.
   - (* Case 2: *)
     subst.
     destruct e2 as (a3', a4).
     inversion H7; subst. (* a3 = a3' *)
     apply C.a_to_aba in H3; destruct H3 as (r0, H3).
     exists ((r0, b1) :: (b1, b2):: bw0)%list.
-    apply_auto a_to_b_b_walk_cons.
+    auto using a_to_b_b_walk_cons.
 Qed.
 
 Lemma a_to_b_total:
@@ -259,11 +246,11 @@ Proof.
     destruct H2 as (bw, (H1, H2)).
     destruct a as (a1, a2).
     destruct aw.
-    + apply_auto a_to_b_total_edge.
+    + auto using a_to_b_total_edge.
     + destruct p as (a2', a3).
       (* a2 = a2' *)
       compute in H4; rewrite <- H4 in *; clear H4.
-      apply a_to_b_total_step with (bw := bw); r_auto.
+      eauto using a_to_b_total_step.
 Qed.
 
 Lemma a_to_b_step:
@@ -350,16 +337,14 @@ Proof.
       inversion H. subst; clear H.
       exists a1; exists a2; exists a3.
       intuition.
-      apply_auto edge_t_to_to_a_to_b.
-      apply end_cons.
-      apply end_nil.
+      * auto using edge_t_to_to_a_to_b.
+      * auto using end_cons, end_nil.
     + inversion H; subst; clear H.
       apply IHa_to_b in H5.
       destruct H5 as (a1, (a2, (a3, (Ha, (Hb, (Hc, Hd)))))).
       exists a1; exists a2; exists a3.
       intuition.
-      apply end_cons.
-      assumption.
+      auto using end_cons.
 Qed.
 
 Lemma cycle_a_to_b1:
@@ -374,7 +359,7 @@ Proof.
   apply C.bab_to_b in H.
   exists ((r,r) :: nil)%list.
   simpl in *.
-  apply_auto edge1_to_cycle.
+  auto using edge1_to_cycle.
 Qed.
 
 Theorem cycle_a_to_b:
@@ -383,7 +368,7 @@ Theorem cycle_a_to_b:
   exists w', BCycle w'.
 Proof.
   intros.
-  expand H. (* ACycle w *)
+  inversion H; subst; clear H. (* ACycle w *)
   rename v1 into a1;
   rename v2 into a2;
   rename vn into tn.
@@ -394,7 +379,7 @@ Proof.
   - (* Case: (t,t)::nil *)
     subst.
     apply end_inv in H0; inversion H0; subst.
-    apply cycle_a_to_b1 with (t:=tn); r_auto.
+    eauto using cycle_a_to_b1.
   - (* Case: (a1,a2) :: aw *)
     subst.
     destruct e2 as (a2', a3).
@@ -402,22 +387,22 @@ Proof.
     destruct e as (b1, b2).
     (* Fun begins *)
     rename bw0 into bw.
-    assert (Hre: exists r rn, End ((b1, b2) :: bw) (r, rn) ).
+    assert (Hre: exists r rn, End ((b1, b2) :: bw) (r, rn) ). {
       assert (H':= end_total (b1, b2) bw).
       destruct H' as ((rn,b1'), H').
       exists rn; exists b1'.
       assumption.
+    }
     destruct Hre as (r, (rn, Hre)).
     assert (Hre' := Hre).
     apply a_to_b_end with (aw := ((a1, a2) :: ((a2, a3) :: aw)%list)%list) in Hre.
     destruct Hre as (t, (tn', (a1', (Ha, (Hb, (Hc, Hd)))))).
     apply end_det with (e:=(tn, a1)) in Hd.
-    expand Hd. rename tn' into tn; rename a1' into a1.
-    assert (Hs: BAB rn a1 b1).
-      apply C.aba_to_bab with (a1:=tn) (a3:=a2).
-      assumption.
+    inversion Hd; subst; clear Hd. rename tn' into tn; rename a1' into a1.
+    assert (Hs: BAB rn a1 b1). {
       apply edge_a_to_b_inv1 in H9.
-      assumption.
+      eauto using C.aba_to_bab.
+    }
     (* Ready to build the path *)
     exists ((rn,b1)::(b1,b2)::bw)%list.
     apply cycle_def with (vn:=r).
@@ -428,36 +413,26 @@ Proof.
     assumption.
     assumption.
 Qed.
+
 End CycleAAtoBB.
 
-
-Definition cycle_a_to_cycle_b := fun (bp:M.Bipartite) =>
-  cycle_a_to_b
-    (M.vertex_a bp)
-    (M.vertex_b bp)
-    (M.AB bp)
-    (M.BA bp).
-
-Let cycle_b_to_cycle_a' := fun (bp:M.Bipartite) =>
-  cycle_a_to_b
-    (M.vertex_b bp)
-    (M.vertex_a bp)
-    (M.BA bp)
-    (M.AB bp).
-
-Lemma cycle_b_to_cycle_a :
-  forall bp w,
-  M.BCycle bp w ->
-  exists w',
-  M.ACycle bp w'.
+Section B_TO_A.
+Variable A: Type.
+Variable B: Type.
+Variable AB : A -> B -> Prop.
+Variable BA : B -> A -> Prop.
+Variable w: list (B*B)%type.
+Lemma cycle_b_to_a:
+  forall w,
+  Cycle (Bipartite.BB AB BA) w ->
+  exists w', Cycle (Bipartite.AA AB BA) w'.
 Proof.
   intros.
-  simpl in *.
-  rewrite C.cycle_b_aa_eq_bb in H.
-  assert (H':= cycle_b_to_cycle_a' bp w H).
-  destruct H' as (w', H').
+  apply Bipartite.cycle_aa_eq_rev_bb in H.
+  apply cycle_a_to_b in H.
+  destruct H as (w', H).
   exists w'.
-  simpl in *.
-  rewrite C.cycle_b_aa_eq_bb in H'.
+  apply Bipartite.cycle_aa_eq_rev_bb.
   assumption.
 Qed.
+End B_TO_A.

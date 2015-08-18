@@ -1,5 +1,4 @@
-Require Import
-  Coq.Lists.List.
+Require Import Coq.Lists.List.
 
 Require Import Aniceto.Tactics.
 Require Import Aniceto.Pair.
@@ -873,6 +872,15 @@ Proof.
   auto.
 Qed.
 
+Lemma walk_eq:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  (forall e, E e <-> F e) ->
+  forall w,
+  Walk E w <-> Walk F w.
+Proof.
+  split; repeat (apply walk_impl; apply H).
+Qed.
+
 Lemma walk2_impl:
   forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
   (forall e, E e -> F e) ->
@@ -882,8 +890,40 @@ Lemma walk2_impl:
 Proof.
   intros.
   inversion H0; subst; clear H0.
-  apply walk2_def; repeat auto.
-  apply walk_impl with (E0:=E); repeat auto.
+  eauto using walk2_def, walk_impl.
+Qed.
+
+Lemma walk2_eq:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  (forall e, E e <-> F e) ->
+  forall x y w,
+  Walk2 E x y w <-> Walk2 F x y w.
+Proof.
+  intros.
+  split; repeat (apply walk2_impl; apply H).
+Qed.
+
+Lemma cycle_impl:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  (forall e, E e -> F e) ->
+  forall w,
+  Cycle E w ->
+  Cycle F w.
+Proof.
+  intros.
+  inversion H0.
+  apply walk_impl with (F0:=F) in H2; repeat auto.
+  eauto using cycle_def.
+Qed.
+
+Lemma cycle_eq:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  (forall e, E e <-> F e) ->
+  forall w,
+  Cycle E w <-> Cycle F w.
+Proof.
+  intros.
+  split; repeat (apply cycle_impl; apply H).
 Qed.
 
 Implicit Arguments Cycle.

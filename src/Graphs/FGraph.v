@@ -2,7 +2,7 @@ Require Import Coq.Lists.List.
 Require Import Coq.Lists.ListSet.
 Require Import Coq.Bool.Bool.
 
-Require Import Aniceto.Graphs.Core.
+Require Import Aniceto.Graphs.Graph.
 Require Import Aniceto.Pair.
 Require Import Aniceto.List.
 Require Import Aniceto.Sig.
@@ -40,7 +40,7 @@ Proof.
   apply in_eq.
 Qed.
 
-Definition In (v:V) (g:fgraph) := Core.In (Edge g) v.
+Definition In (v:V) (g:fgraph) := Graph.In (Edge g) v.
 
 Lemma in_def:
   forall v e g,
@@ -49,7 +49,7 @@ Lemma in_def:
   In v g.
 Proof.
   intros.
-  apply Core.in_def with (e:=e); repeat auto.
+  apply Graph.in_def with (e:=e); repeat auto.
 Qed.
 
 Lemma in_left:
@@ -58,7 +58,7 @@ Lemma in_left:
   In v g.
 Proof.
   intros.
-  apply Core.in_left with (v':=v'); auto.
+  apply Graph.in_left with (v':=v'); auto.
 Qed.
 
 Lemma in_right:
@@ -67,7 +67,7 @@ Lemma in_right:
   In v g.
 Proof.
   intros.
-  apply Core.in_right with (v':=v'); auto.
+  apply Graph.in_right with (v':=v'); auto.
 Qed.
 
 Lemma in_nil:
@@ -105,7 +105,7 @@ Proof.
   inversion H; auto.
   inversion Hpin.
   - subst; simpl in *.
-    apply Core.pred_in_cycle with (v1:=v1) (v2:=v2) in H.
+    apply Graph.pred_in_cycle with (v1:=v1) (v2:=v2) in H.
     destruct H as (v3, H).
     exists v3.
     intuition.
@@ -133,7 +133,7 @@ Proof.
     intuition.
     apply in_edge with (w:=w); repeat auto.
   - subst; simpl in *.
-    apply Core.succ_in_cycle with (v1:=v1) (v2:=v2) in H.
+    apply Graph.succ_in_cycle with (v1:=v1) (v2:=v2) in H.
     destruct H as (v3, H).
     exists v3.
     intuition.
@@ -173,7 +173,7 @@ Proof.
   auto.
 Qed.
 
-Definition subgraph g g' := Core.subgraph (Edge g) (Edge g').
+Definition subgraph g g' := Graph.subgraph (Edge g) (Edge g').
 
 Lemma subgraph_incl:
   forall g g',
@@ -183,14 +183,14 @@ Proof.
   split.
   - intros.
     unfold subgraph.
-    unfold Core.subgraph.
+    unfold Graph.subgraph.
     intros.
     unfold Edge in *.
     unfold incl in *.
     apply H; auto.
   - intros.
     unfold subgraph in *.
-    unfold Core.subgraph in *.
+    unfold Graph.subgraph in *.
     unfold Edge in *.
     unfold incl.
     assumption.
@@ -214,7 +214,7 @@ Lemma subgraph_edge:
 Proof.
   intros.
   unfold subgraph in *.
-  apply Core.subgraph_edge with (E:=Edge g) (E':=Edge g'); repeat auto.
+  apply Graph.subgraph_edge with (E:=Edge g) (E':=Edge g'); repeat auto.
 Qed.
 
 Lemma subgraph_in:
@@ -226,7 +226,7 @@ Proof.
   intros.
   unfold In in *.
   unfold subgraph in *.
-  apply Core.subgraph_in with (E:=Edge g); repeat auto.
+  apply Graph.subgraph_in with (E:=Edge g); repeat auto.
 Qed.
 
 Lemma subgraph_walk:
@@ -237,7 +237,7 @@ Lemma subgraph_walk:
 Proof.
   intros.
   unfold subgraph in *.
-  apply Core.subgraph_walk with (E:=Edge g) (E':=Edge g'); repeat auto.
+  apply Graph.subgraph_walk with (E:=Edge g) (E':=Edge g'); repeat auto.
 Qed.
 
 Lemma walk_is_subgraph:
@@ -247,7 +247,7 @@ Lemma walk_is_subgraph:
 Proof.
   intros.
   unfold subgraph.
-  unfold Core.subgraph.
+  unfold Graph.subgraph.
   intros.
   apply in_edge with (e:=e) in H.
   assumption.
@@ -263,7 +263,7 @@ Lemma subgraph_cycle:
 Proof.
   intros.
   unfold subgraph in *.
-  apply Core.subgraph_cycle with (E:=Edge g) (E':=Edge g'); repeat auto.
+  apply Graph.subgraph_cycle with (E:=Edge g) (E':=Edge g'); repeat auto.
 Qed.
 
 Lemma subgraph_cons:
@@ -272,7 +272,7 @@ Lemma subgraph_cons:
 Proof.
   intros.
   unfold subgraph.
-  unfold Core.subgraph.
+  unfold Graph.subgraph.
   intros.
   apply List.in_cons.
   assumption.
@@ -459,7 +459,7 @@ Lemma filter_vertex_in:
 Proof.
   intros.
   unfold In.
-  unfold Core.In.
+  unfold Graph.In.
   exists e.
   intuition.
   apply filter_edge_in; repeat auto.
@@ -535,7 +535,7 @@ Proof.
 Qed.
 
 Definition Forall (P: V -> Prop) (g:fgraph) :=
-  Core.Forall (Edge g) P.
+  Graph.Forall (Edge g) P.
 
 Lemma subgraph_forall:
   forall g g' P,
@@ -546,7 +546,7 @@ Proof.
   intros.
   unfold Forall in *.
   unfold subgraph in *.
-  apply Core.subgraph_forall with (E':=Edge g'); repeat auto.
+  apply Graph.subgraph_forall with (E':=Edge g'); repeat auto.
 Qed.
 
 Lemma forall_incl:
@@ -557,7 +557,7 @@ Lemma forall_incl:
 Proof.
   intros.
   unfold Forall in *.
-  apply Core.forall_incl with (P:=P); repeat auto.
+  apply Graph.forall_incl with (P:=P); repeat auto.
 Qed.
 
 Lemma forall_inv:
@@ -595,7 +595,7 @@ Proof.
   intros.
   unfold AllOutgoing in *.
   unfold Forall in *.
-  unfold Core.Forall in *.
+  unfold Graph.Forall in *.
   intros.
   apply has_outgoing_rm_incl.
   apply rm_sources_in in H0.
@@ -696,7 +696,7 @@ Lemma subgraph_get_incoming:
 Proof.
   intros.
   unfold subgraph.
-  unfold Core.subgraph.
+  unfold Graph.subgraph.
   intros.
   unfold Edge in H.
   apply all_incoming_from_prop with (v:=v).
@@ -757,7 +757,7 @@ Proof.
   unfold AllOutgoing in *.
   unfold AllIncoming.
   unfold Forall in *.
-  unfold Core.Forall in *.
+  unfold Graph.Forall in *.
   intros.
   apply rm_sources_has_incoming.
   assumption.
@@ -824,7 +824,7 @@ Proof.
     (* 1 *)
     unfold AllOutgoing.
     unfold Forall.
-    unfold Core.Forall.
+    unfold Graph.Forall.
     intros.
     rewrite Heqfg.
     rewrite Heqfg in H3.
@@ -1150,7 +1150,7 @@ Proof.
   destruct H.
   - assumption.
   - unfold subgraph in *.
-    unfold Core.subgraph in *.
+    unfold Graph.subgraph in *.
     unfold Edge in *.
     apply H0.
     assumption.
@@ -1342,7 +1342,7 @@ Proof.
     rewrite has_incoming_neq_nil in H.
     contradiction H; auto.
     unfold In.
-    unfold Core.In.
+    unfold Graph.In.
     exists e0.
     destruct e0.
     intuition.
