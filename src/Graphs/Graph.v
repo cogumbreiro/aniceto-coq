@@ -857,10 +857,10 @@ End EDGE.
 
 End Walk.
 
-Lemma walk_impl:
+Lemma walk_impl_weak:
   forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
-  (forall e, E e -> F e) ->
   forall w,
+  (forall e, List.In e w -> E e -> F e) ->
   Walk E w ->
   Walk F w.
 Proof.
@@ -870,6 +870,17 @@ Proof.
   apply walk_def; repeat auto.
   rewrite Forall_forall in *.
   auto.
+Qed.
+
+Lemma walk_impl:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  (forall e, E e -> F e) ->
+  forall w,
+  Walk E w ->
+  Walk F w.
+Proof.
+  intros.
+  eauto using walk_impl_weak.
 Qed.
 
 Lemma walk_eq:
@@ -903,6 +914,19 @@ Proof.
   split; repeat (apply walk2_impl; apply H).
 Qed.
 
+Lemma cycle_impl_weak:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  forall w,
+  (forall e, List.In e w -> E e -> F e) ->
+  Cycle E w ->
+  Cycle F w.
+Proof.
+  intros.
+  inversion H0.
+  subst.
+  eauto using walk_impl_weak, cycle_def.
+Qed.
+
 Lemma cycle_impl:
   forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
   (forall e, E e -> F e) ->
@@ -912,8 +936,7 @@ Lemma cycle_impl:
 Proof.
   intros.
   inversion H0.
-  apply walk_impl with (F0:=F) in H2; repeat auto.
-  eauto using cycle_def.
+  eauto using walk_impl, cycle_def.
 Qed.
 
 Lemma cycle_eq:
