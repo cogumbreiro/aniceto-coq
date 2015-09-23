@@ -422,6 +422,70 @@ Module MapUtil (Import M:FMapInterface.WS).
       auto.
   Qed.
 
+  Lemma nonempty_in:
+    forall {elt:Type} (m:t elt),
+    ~ Empty m <->
+    exists k, In k m.
+  Proof.
+    split.
+    + intros.
+      remember (elements m).
+      destruct l.
+      - symmetry in Heql.
+        apply elements_Empty in Heql.
+        tauto.
+      - destruct p as (k, e).
+        assert (List.In (k, e) (elements m)). {
+          rewrite <- Heql.
+          auto with *.
+        }
+        exists k.
+        eauto using in_elements_to_in.
+    + intros.
+      unfold Empty.
+      intuition.
+      unfold In in *.
+      destruct H as (k, (e, Hmt)).
+      eauto using H0.
+  Qed.
+  (**
+    Given a predicate, pick an element from the map, otherwise the predicate
+    is not matched for all elements in the map.
+    *)
+  Lemma pred_choice:
+    forall {elt:Type} (m:t elt) f,
+    Proper (E.eq ==> eq ==> eq) f ->
+    {exists k v, MapsTo k v m /\ f k v = true } +
+    {forall k v, MapsTo k v m -> f k v = false}.
+  Proof.
+    intros.
+    remember (fst (P.partition f m)) as y.
+    destruct (in_choice y).
+  - left.
+    destruct e as (k, Hin).
+    apply in_to_mapsto in Hin.
+    destruct Hin as (e, Hin).
+    exists k.
+    exists e.
+    apply P.partition_iff_1 with (k:=k) (e:=e) in Heqy; auto with *.
+    intuition.
+  - right.
+    intros.
+    remember (f k v) as b.
+    destruct b; auto.
+    symmetry in Heqb.
+    assert (exists k, In k y). {
+      exists k.
+      unfold In.
+      exists v.
+      apply P.partition_iff_1 with (k:=k) (e:=v) in Heqy; auto.
+      rewrite Heqy.
+      intuition.
+    }
+    contradiction H1.
+  Qed.
+
+
   Definition keys {elt:Type} (m:t elt) : list key :=  fst (split (elements m)).
 
   Lemma keys_spec_1:
@@ -534,6 +598,33 @@ Module MapUtil (Import M:FMapInterface.WS).
     apply List.nodupa_nodup_iff in Hx.
     assumption.
     apply k_eq.
+  Qed.
+
+  Lemma in_dec {elt:Type} (is_eq:forall k k' : E.t, E.eq k k' <-> k = k'):
+    forall k (m:t elt),
+    { In k m } + { ~ In k m  }.
+  Proof.
+    intros.
+    assert (eq_dec  : forall x y:E.t, { x = y } + { x <> y }). {
+      intros.
+      destruct (E.eq_dec x y).
+      - left.
+        rewrite <- is_eq.
+        assumption.
+      - right.
+        intuition.
+        rewrite is_eq in *.
+        tauto.
+    }
+    destruct (List.in_dec eq_dec k (keys m)).
+    - left.
+      auto using keys_spec_1.
+    - right.
+      intuition.
+      assert (List.In  k (keys m)). {
+        apply keys_spec; auto.
+      }
+      contradiction H0.
   Qed.
 
   Definition values {elt:Type} (m:t elt) : list elt :=  snd (split (elements m)).
