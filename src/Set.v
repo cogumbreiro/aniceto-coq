@@ -1,8 +1,10 @@
 Require Coq.FSets.FSetFacts.
 Require Coq.FSets.FSetInterface.
+Require Coq.FSets.FSetProperties.
 Require Import Coq.Lists.SetoidList.
 
 Module SetUtil (Import M:FSetInterface.WS).
+  Module P := FSetProperties.Properties M.
   Lemma in_elements_impl_in:
     forall e s,
     List.In e (elements s) ->
@@ -48,4 +50,26 @@ Module SetUtil (Import M:FSetInterface.WS).
     - apply in_elements_impl_in.
   Qed.
 
+  Lemma nonempty_in:
+    forall s,
+    ~ Empty s ->
+    exists e, In e s.
+  Proof.
+    remember ((fun (s:t) => ~ Empty s ->
+    exists e, In e s) <: t -> Type) as P.
+    assert (X:= P.set_induction (P:=P)).
+    subst.
+    apply X.
+    - intros.
+      contradiction H0.
+    - intros.
+      exists x.
+      apply P.Add_Equal in H1.
+      assert (In x (add x s)). {
+        auto using add_1.
+      }
+      unfold Equal in *.
+      apply H1.
+      assumption.
+  Qed.
 End SetUtil.
