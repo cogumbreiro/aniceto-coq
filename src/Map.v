@@ -670,4 +670,11 @@ Module MapUtil (Import M:FMapInterface.WS).
     assumption.
   Qed.
 
+  Lemma eq_key_unfold:
+    forall {elt:Type} (k k':E.t) (e e':elt),
+    eq_key (k, e) (k', e') <-> E.eq k k'.
+  Proof.
+    unfold eq_key.
+    tauto.
+  Qed.
 End MapUtil.
