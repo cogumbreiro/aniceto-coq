@@ -746,11 +746,10 @@ Proof.
   simpl in *.
   destruct (f a).
   - exists a. trivial.
-  - simpl in H.
-    auto.
+  - auto.
 Qed.
 
-Lemma find_existsb_spec_1:
+Lemma find_existsb_spec_true:
   forall l,
   (exists x, find f l = Some x) <-> existsb f l = true.
 Proof.
@@ -762,6 +761,42 @@ Proof.
   - apply existsb_impl_find_some.
 Qed.
 
+Lemma find_none_impl_existsb:
+  forall l,
+  find f l = None -> existsb f l = false.
+Proof.
+  intros.
+  induction l.
+  { auto. }
+  simpl in *.
+  destruct (f a).
+  - inversion H.
+  - auto.
+Qed.
+
+Lemma existsb_false_impl_find:
+  forall l,
+  existsb f l = false ->
+  find f l = None.
+Proof.
+  intros.
+  induction l.
+  { auto. }
+  simpl in *.
+  destruct (f a).
+  - inversion H.
+  - auto.
+Qed.
+
+Lemma find_existsb_spec_false:
+  forall l,
+  find f l = None <-> existsb f l = false.
+Proof.
+  split.
+  - apply find_none_impl_existsb.
+  - apply existsb_false_impl_find.
+Qed.
+
 Lemma find_inv_eq:
   forall x l,
   f x = true ->
@@ -771,6 +806,31 @@ Proof.
   simpl.
   rewrite H.
   trivial.
+Qed.
+
+Lemma existsb_forallb:
+  forall l,
+  existsb f l = negb (forallb (fun x : A => negb (f x)) l).
+Proof.
+  intros.
+  induction l.
+  - auto.
+  - simpl.
+    destruct (f a); auto.
+Qed.
+
+Lemma find_none_incl:
+  forall x l,
+  find f (x::l) = None ->
+  find f l = None.
+Proof.
+  intros.
+  rewrite find_existsb_spec_false in *.
+  rewrite existsb_forallb in *.
+  rewrite negb_false_iff in *.
+  apply Forall_forallb.
+  apply Forall_forallb in H.
+  inversion H; auto.
 Qed.
 
 End FindProps.
