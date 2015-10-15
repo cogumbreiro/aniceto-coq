@@ -835,3 +835,65 @@ Qed.
 
 End FindProps.
 
+Section Sum.
+  Variable A: Type.
+  Variable weight: A -> nat.
+  Let aux := (fun (n:nat) (a:A) => n + weight a). 
+  Definition summation (l:list A) : nat := fold_left aux l 0.
+  
+  Let fold_left_aux_lift:
+    forall l n,
+    fold_left aux l n = n + fold_left aux l 0.
+  Proof.
+    intros l.
+    induction l.
+    { intros; auto. }
+    intros.
+    simpl.
+    assert (rw1 : aux n a = n + weight a) by auto.
+    rewrite rw1.
+    assert (rw2 : aux 0 a = weight a) by auto.
+    rewrite rw2.
+    assert (rw3 := IHl (n+ weight a)).
+    rewrite rw3.
+    assert (rw4 := IHl (weight a)).
+    rewrite rw4.
+    auto with *.
+  Qed.
+  
+  Lemma summation_rw_cons:
+    forall l x,
+    summation (x::l) = weight x + summation l.
+  Proof.
+    intros l.
+    induction l.
+    - intros.
+      auto.
+    - assert (Hx := IHl a).
+      intros.
+      rewrite Hx.
+      unfold summation.
+      simpl.
+      assert (rw : aux 0 x = weight x) by auto.
+      rewrite rw.
+      assert (rw2 : aux (weight x) a = weight x + weight a) by auto.
+      rewrite rw2.
+      rewrite fold_left_aux_lift.
+      auto with *.
+  Qed.
+
+  Lemma summation_rw_app:
+    forall l1 l2,
+    summation (l1 ++ l2) = summation l1 + summation l2.
+  Proof.
+    intros l1.
+    induction l1.
+    { intros; auto. }
+    intros.
+    simpl.
+    rewrite summation_rw_cons.
+    rewrite summation_rw_cons.
+    rewrite IHl1.
+    auto with *.
+  Qed.
+End Sum.
