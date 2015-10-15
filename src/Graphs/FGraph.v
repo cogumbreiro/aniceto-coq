@@ -263,7 +263,7 @@ Lemma subgraph_cycle:
 Proof.
   intros.
   unfold subgraph in *.
-  apply Graph.subgraph_cycle with (E:=Edge g) (E':=Edge g'); repeat auto.
+  eauto using Graph.subgraph_cycle.
 Qed.
 
 Lemma subgraph_cons:
@@ -285,7 +285,7 @@ Lemma cycle_add:
 Proof.
   intros.
   assert (sub := subgraph_cons g e).
-  apply subgraph_cycle with (g:=g); repeat assumption.
+  eauto using subgraph_cycle.
 Qed.
 
 Inductive HasIncoming : fgraph -> V -> Prop :=
