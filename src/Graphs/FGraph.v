@@ -88,9 +88,10 @@ Proof.
   intros.
   inversion H.
   destruct H0.
-  assert (x_in : List.In x (e::g)).
-  apply List.in_cons. assumption.
-  apply in_def with (e := x); repeat auto.
+  assert (x_in : List.In x (e::g)). {
+    auto using List.in_cons.
+  }
+  eauto using in_def.
 Qed.
 
 Lemma pred_in_cycle:
@@ -155,7 +156,7 @@ Proof.
   apply existsb_exists in H.
   destruct H as (x, (x_in_g, mem_in_x)).
   apply pair_mem_prop in mem_in_x.
-  apply in_def with (e:=x); repeat auto.
+  eauto using in_def.
 Qed.
 
 Lemma mem_from_prop:
@@ -169,8 +170,7 @@ Proof.
   unfold mem.
   rewrite existsb_exists.
   exists e.
-  apply pair_mem_from_prop with (eq_dec:=eq_dec) in v_in_e.
-  auto.
+  eauto using pair_mem_from_prop.
 Qed.
 
 Definition subgraph g g' := Graph.subgraph (Edge g) (Edge g').
@@ -187,7 +187,7 @@ Proof.
     intros.
     unfold Edge in *.
     unfold incl in *.
-    apply H; auto.
+    auto.
   - intros.
     unfold subgraph in *.
     unfold Graph.subgraph in *.
@@ -202,8 +202,7 @@ Lemma subgraph_filter:
 Proof.
   intros.
   assert (Hx := filter_incl f g).
-  apply subgraph_incl.
-  auto.
+  auto using subgraph_incl.
 Qed.
 
 Lemma subgraph_edge:
@@ -226,7 +225,7 @@ Proof.
   intros.
   unfold In in *.
   unfold subgraph in *.
-  apply Graph.subgraph_in with (E:=Edge g); repeat auto.
+  eauto using Graph.subgraph_in.
 Qed.
 
 Lemma subgraph_walk:
@@ -237,7 +236,7 @@ Lemma subgraph_walk:
 Proof.
   intros.
   unfold subgraph in *.
-  apply Graph.subgraph_walk with (E:=Edge g) (E':=Edge g'); repeat auto.
+  eauto using Graph.subgraph_walk.
 Qed.
 
 Lemma walk_is_subgraph:
@@ -303,8 +302,7 @@ Proof.
   inversion H. subst.
   unfold Edge in *.
   apply List.in_cons with (a:=e) in H0.
-  apply has_incoming_def with (v':=v').
-  auto.
+  eauto using has_incoming_def.
 Qed.
 
 Inductive HasOutgoing : fgraph -> V -> Prop :=
@@ -322,8 +320,7 @@ Proof.
   inversion H. subst.
   unfold Edge in *.
   apply List.in_cons with (a:=e) in H0.
-  apply has_outgoing_def with (v':=v').
-  auto.
+  eauto using has_outgoing_def.
 Qed.
 
 Definition has_incoming (g:fgraph) (v:V) : bool :=
@@ -342,8 +339,7 @@ Proof.
   simpl in *.
   destruct (eq_dec v v2).
   - subst.
-    apply edge_def in x_in_g.
-    apply has_incoming_def with (v':=v1); assumption.
+    eauto using edge_def, has_incoming_def.
   - inversion v_in_x.
 Qed.
 
@@ -407,9 +403,7 @@ Lemma rm_sources_in:
   In v g.
 Proof.
   intros.
-  apply (subgraph_in (g:=rm_sources g)).
-  apply rm_sources_subgraph.
-  assumption.
+  auto using (subgraph_in (g:=rm_sources g)), rm_sources_subgraph.
 Qed.
 
 Lemma rm_sources_has_incoming:
@@ -427,9 +421,7 @@ Proof.
   inversion v_in_e.
   - rewrite <- H in e_in_g.
     assumption.
-  - remember (feedback_filter edge_eq_dec
-              (fun (g' : list (V * V)) (e0 : V * V) =>
-               has_incoming g' (fst e0)) g) as rm_g.
+  - remember (feedback_filter edge_eq_dec _) as rm_g.
     destruct e as (v1, v2).
     simpl in *.
     rewrite <- H in *.
@@ -462,7 +454,7 @@ Proof.
   unfold Graph.In.
   exists e.
   intuition.
-  apply filter_edge_in; repeat auto.
+  auto using filter_edge_in.
 Qed.
 
 Lemma has_outgoing_filter:
@@ -480,26 +472,20 @@ Proof.
   inversion H2.
   - simpl in H3.
     rewrite H3 in *.
-    apply has_outgoing_def with (v':=v1).
-    assumption.
+    eauto using has_outgoing_def.
   - simpl in H3. subst.
     (* let's check the edge in the original graph *)
     inversion H0; subst; clear H0.
     remember (fg (v1, v')) as b.
     symmetry in Heqb.
     destruct b.
-    + apply has_outgoing_def with (v' := v').
-      apply filter_edge_in; repeat auto.
+    + eauto using has_outgoing_def, filter_edge_in.
     + (* absurd case *)
       unfold fg in Heqb.
       simpl in Heqb.
-      assert (Hx: has_incoming g v1 = true).
-      apply has_incoming_from_prop.
-      apply has_incoming_def with (v':=v0).
-      apply subgraph_edge with (g:=(filter fg g)).
-      apply subgraph_filter.
-      assumption.
-      (* eoa *)
+      assert (Hx: has_incoming g v1 = true). {
+        eauto using has_incoming_from_prop, has_incoming_def, subgraph_edge, subgraph_filter.
+      }
       rewrite Hx in Heqb.
       inversion Heqb.
 Qed.
@@ -516,11 +502,11 @@ Proof.
   functional induction (feedback_filter edge_eq_dec f g).
   - assumption.
   - rename l into g.
-    remember (fun (g' : list (V * V)) (e0 : V * V) => has_incoming g' (fst e0)) as f.
-    remember (fun e : V * V => has_incoming g (fst e)) as ff.
-    apply IHl.
+    remember (fun (g' : list (V * V)) (e0 : V * V) => _) as f.
+    remember (fun e : V * V => _ ) as ff.
+    apply IHl; auto.
     rewrite Heqff.
-    apply has_outgoing_filter.
+    apply has_outgoing_filter; auto.
     inversion H0.
     destruct H1.
     unfold In.
@@ -529,8 +515,6 @@ Proof.
     intuition.
     apply feedback_filter_in in H1.
     subst.
-    assumption.
-    assumption.
     assumption.
 Qed.
 
@@ -546,7 +530,7 @@ Proof.
   intros.
   unfold Forall in *.
   unfold subgraph in *.
-  apply Graph.subgraph_forall with (E':=Edge g'); repeat auto.
+  eauto using Graph.subgraph_forall.
 Qed.
 
 Lemma forall_incl:
@@ -557,7 +541,7 @@ Lemma forall_incl:
 Proof.
   intros.
   unfold Forall in *.
-  apply Graph.forall_incl with (P:=P); repeat auto.
+  eauto using Graph.forall_incl.
 Qed.
 
 Lemma forall_inv:
@@ -566,11 +550,10 @@ Lemma forall_inv:
   Forall P g.
 Proof.
   intros.
-  apply subgraph_forall with (g':= e :: g).
+  apply subgraph_forall with (g':= e :: g); auto.
   apply subgraph_incl.
   apply incl_tl.
   apply incl_refl.
-  assumption.
 Qed.
 
 Definition AllOutgoing g : Prop := Forall (fun v => HasOutgoing g v) g.
@@ -584,7 +567,7 @@ Proof.
   intros.
   unfold AllOutgoing in *.
   unfold Forall in *.
-  apply H0; assumption.
+  auto.
 Qed.
 
 Lemma all_outgoing_rm_incl:
@@ -598,9 +581,8 @@ Proof.
   unfold Graph.Forall in *.
   intros.
   apply has_outgoing_rm_incl.
-  apply rm_sources_in in H0.
-  apply H; assumption.
-  assumption.
+  - apply rm_sources_in in H0; auto.
+  - assumption.
 Qed.
 
 Definition AllIncoming g : Prop := Forall (fun v => HasIncoming g v) g.
@@ -626,14 +608,11 @@ Proof.
   - simpl in H. inversion H.
   - destruct a.
     simpl in H.
-    destruct (eq_dec v3 v).
-    + subst.
-      inversion H.
-      * inversion H0.
-        trivial.
-      * apply IHg; assumption.
-    + apply IHg.
-      assumption.
+    destruct (eq_dec v3 v); auto.
+    subst.
+    inversion H; auto.
+    inversion H0.
+    trivial.
 Qed.
 
 Lemma all_incoming_prop:
@@ -653,15 +632,13 @@ Proof.
         subst.
         apply in_eq.
       * apply IHg in H; clear IHg.
-        apply List.in_cons; assumption.
+        auto using List.in_cons.
     + apply IHg.
       unfold Edge in *.
-      inversion H.
+      inversion H; trivial.
       inversion H0.
       subst.
-      contradiction n.
-      trivial.
-      assumption.
+      contradiction n; trivial.
 Qed.
 
 Lemma all_incoming_from_prop:
@@ -682,12 +659,10 @@ Proof.
         apply List.in_eq.
       * apply IHg in H0.
         unfold Edge in H0.
-        apply List.in_cons.
-        assumption.
+        auto using List.in_cons.
     + apply IHg in H.
       unfold Edge in H.
-      apply List.in_cons.
-      assumption.
+      auto using List.in_cons.
 Qed.
 
 Lemma subgraph_get_incoming:
@@ -699,8 +674,7 @@ Proof.
   unfold Graph.subgraph.
   intros.
   unfold Edge in H.
-  apply all_incoming_from_prop with (v:=v).
-  assumption.
+  eauto using all_incoming_from_prop.
 Qed.
 
 Lemma has_incoming_neq_nil:
@@ -723,17 +697,15 @@ Proof.
     remember (get_incoming g v) as g'.
     destruct g'.
     - contradiction H; trivial.
-    - assert (List.In e (get_incoming g v)).
-      rewrite <- Heqg';
-      apply in_eq.
-      (* eoa *)
+    - assert (List.In e (get_incoming g v)). {
+        rewrite <- Heqg';
+        apply in_eq.
+      }
       assert (Hx := H0).
       destruct e.
       apply get_incoming_inv in H0.
       subst.
-      apply has_incoming_def with (v':=v0).
-      apply all_incoming_from_prop in Hx.
-      assumption.
+      eauto using has_incoming_def, all_incoming_from_prop.
 Qed.
 
 Lemma all_incoming_in:
@@ -745,7 +717,7 @@ Proof.
   intros.
   unfold AllIncoming in *.
   unfold Forall in *.
-  apply H0; assumption.
+  auto.
 Qed.
 
 Lemma all_incoming_rm_incl:
@@ -758,9 +730,7 @@ Proof.
   unfold AllIncoming.
   unfold Forall in *.
   unfold Graph.Forall in *.
-  intros.
-  apply rm_sources_has_incoming.
-  assumption.
+  auto using rm_sources_has_incoming.
 Qed.
 
 Lemma rm_filter_nonempty:
@@ -775,11 +745,7 @@ Proof.
   inversion H0.
   destruct H1.
   destruct x as (vi, vo).
-  assert (vo_out: HasOutgoing g vo).
-  apply all_outgoing_in.
-  apply in_right with (v':=vi); auto.
-  assumption.
-  (* eoa *)
+  assert (vo_out: HasOutgoing g vo) by eauto using all_outgoing_in, in_right.
   inversion vo_out.
   subst.
   exists v'.
@@ -787,9 +753,7 @@ Proof.
   apply pair_in_right.
   unfold fg.
   simpl.
-  apply has_incoming_from_prop.
-  apply has_incoming_def with (v':= vi).
-  apply edge_def; auto.
+  eauto using has_incoming_from_prop, has_incoming_def, edge_def.
 Qed.
 
 Let subgraph_forall_filter:
@@ -798,9 +762,7 @@ Let subgraph_forall_filter:
   Forall P (filter f g).
 Proof.
   intros.
-  apply subgraph_forall with (g':=g).
-  apply subgraph_filter.
-  assumption.
+  eauto using subgraph_forall, subgraph_filter.
 Qed.
 
 Let rm_sources_nonempty':
@@ -814,15 +776,13 @@ Let rm_sources_nonempty':
 Proof.
   intros.
   unfold rm_sources in *.
-  remember (fun (g' : list (V * V)) (e : V * V) => has_incoming g' (fst e)) as fg.
-  functional induction (feedback_filter edge_eq_dec fg g).
-  - auto.
-  - unfold g' in *.
-    rename l into g.
-    remember (feedback_filter (pair_eq_dec eq_dec) fg (filter (fg g) g)) as gf.
-    apply IHl.
-    (* 1 *)
-    unfold AllOutgoing.
+  remember (fun (g' : list (V * V)) (e : V * V) => _) as fg.
+  functional induction (feedback_filter edge_eq_dec fg g); auto.
+  unfold g' in *.
+  rename l into g.
+  remember (feedback_filter _ _)  as  gf.
+  apply IHl; auto.
+  - unfold AllOutgoing.
     unfold Forall.
     unfold Graph.Forall.
     intros.
@@ -839,13 +799,8 @@ Proof.
     unfold In.
     exists x.
     auto.
-    (* 2 *)
-    rewrite Heqfg.
-    apply rm_filter_nonempty; repeat auto.
-    (* 3 *)
-    assumption.
-    (* 4 *)
-    assumption.
+  - rewrite Heqfg.
+    auto using rm_filter_nonempty.
 Qed.
 
 Lemma nonempty_exists_vertex:
@@ -860,8 +815,7 @@ Proof.
       trivial.
     - destruct e.
       exists v.
-      apply in_left with (v':=v0).
-      apply edge_eq.
+      eauto using in_left, edge_eq.
   + intros.
     intuition.
     destruct H.
@@ -882,7 +836,7 @@ Proof.
   intros.
   apply nonempty_exists_vertex in H0.
   apply nonempty_exists_vertex.
-  apply rm_sources_nonempty'; repeat auto.
+  auto using rm_sources_nonempty'.
 Qed.
 
 Theorem exists_has_incoming:
@@ -905,9 +859,7 @@ Proof.
   - unfold rm_sources.
     unfold subgraph.
     apply feedback_filter_incl.
-  - split. assumption.
-    split. assumption.
-    apply rm_sources_nonempty; repeat auto.
+  - repeat split; auto using rm_sources_nonempty.
 Qed.
 
 Definition prepend (w:list edge) (g:fgraph) : option edge :=
@@ -965,17 +917,18 @@ Proof.
     destruct l.
     + inversion H.
     + inversion H; subst; clear H.
-      assert (Edge (get_incoming g v) e).
-      assert (List.In e (get_incoming g v)).
-      rewrite <- Heql.
-      apply in_eq.
-      unfold Edge. assumption.
-      assert (List.In e g).
-      assert (Edge g e).
-      apply subgraph_edge with (g:=(get_incoming g v)).
-      apply subgraph_get_incoming.
-      assumption.
-      unfold Edge in H0; assumption.
+      assert (Edge (get_incoming g v) e). {
+        assert (List.In e (get_incoming g v)). {
+          rewrite <- Heql.
+          apply in_eq.
+        }
+        unfold Edge. assumption.
+      }
+      assert (List.In e g). {
+        assert (Edge g e) by
+          eauto using subgraph_edge, subgraph_get_incoming.
+        unfold Edge in H0; assumption.
+      }
       intuition.
 Qed.
 
@@ -1019,17 +972,11 @@ Lemma cut_starts_with:
 Proof.
   intros.
   destruct w.
-  - destruct H.
-    destruct H.
-    destruct H.
-    inversion H.
+  - repeat (destruct H; try inversion H).
   - simpl.
-    (*unfold StartsWith.*)
-    destruct (eq_dec v' (snd p)).
-    + apply starts_with_cons_inv in H.
-      apply starts_with_cons; repeat auto.
-    + apply starts_with_cons_inv in H.
-      apply starts_with_cons; repeat auto.
+    destruct (eq_dec v' (snd p));
+    (apply starts_with_cons_inv in H;
+      auto using starts_with_cons).
 Qed.
 
 Lemma cut_ends_with:
@@ -1069,8 +1016,7 @@ Proof.
         apply end_nil.
       * exists x.
         intuition.
-        apply end_cons.
-        assumption.
+        apply end_cons; auto.
 Qed.
 
 Lemma cut_is_linked:
@@ -1101,13 +1047,8 @@ Proof.
     apply IHw in H2.
     simpl.
     destruct (eq_dec v (snd a)).
-    + apply edge_to_walk.
-      assumption.
-    + apply walk_cons.
-      assumption.
-      assumption.
-      apply cut_is_linked.
-      auto.
+    + apply edge_to_walk; auto.
+    + apply walk_cons; auto using cut_is_linked.
 Qed.
 
 Definition sublen (p:(list edge * fgraph)) :=
@@ -1133,9 +1074,7 @@ Proof.
   destruct H.
   assumption.
   apply walk_is_subgraph in H0.
-  apply subgraph_edge with (g:=w).
-  assumption.
-  assumption.
+  eauto using subgraph_edge.
 Qed.
 
 Lemma prepend_edge3:
@@ -1147,13 +1086,11 @@ Proof.
   intros.
   apply prepend_edge in H.
   unfold Edge in *.
-  destruct H.
-  - assumption.
-  - unfold subgraph in *.
-    unfold Graph.subgraph in *.
-    unfold Edge in *.
-    apply H0.
-    assumption.
+  destruct H; auto.
+  unfold subgraph in *.
+  unfold Graph.subgraph in *.
+  unfold Edge in *.
+  auto.
 Qed.
 
 Definition ConsOf (w:list edge) := {e: edge | Walk (Edge g) (e :: w) }.
@@ -1276,17 +1213,15 @@ Definition lendiff (w:WalkOf) :=
 Definition build_cycle: forall (w:WalkOf) (v:BuildCycle (Sig_take w)), CycleOf.
 Proof.
   intros.
-  destruct w as (w, (H1, H2)).
-  destruct v as (v, (H3, H4)).
+  destruct w as (w, (?, ?)).
+  destruct v as (v, (?, ?)).
   refine (Sig_yes (cut v w)).
-  apply cycle_def2 with (v:=v).
-  apply cut_starts_with; assumption.
-  apply cut_ends_with; assumption.
-  apply cut_is_walk; repeat auto.
+  apply cycle_def2 with (v:=v);
+  auto using cut_starts_with, cut_ends_with, cut_is_walk.
 Defined.
 
 Function find_cycle (w:WalkOf)
-  {measure lendiff } : option CycleOf :=
+  { measure lendiff } : option CycleOf :=
   match next_edge w with
     | Some e =>
       match try_prepend w e with
@@ -1298,24 +1233,14 @@ Function find_cycle (w:WalkOf)
 Proof.
   intros.
   simpl in *.
-  destruct e.
-  destruct w.
-  destruct x.
+  destruct e as ((?,?), ?).
+  destruct w as (?, (?, (?,?))).
   simpl in *.
-  destruct a.
-  destruct (in_dec edge_eq_dec (v, v0)).
-  + destruct a; inversion teq0. (* absurd *)
-  + destruct a; inversion teq0.
-    destruct w'.
-    inversion H0.
-    unfold lendiff.
-    destruct a.
-    apply set_length_minus.
-    - assumption.
-    - assert (Hx:= w0).
-      apply walk_is_subgraph in Hx.
-      apply subgraph_incl.
-      assumption.
+  destruct (in_dec edge_eq_dec (v, v0)); inversion teq0.
+  destruct w' as (?, (?,(?,?))).
+  inversion H0.
+  unfold lendiff.
+  auto using (set_length_minus _ _ (walk_is_subgraph w0)).
 Defined.
 
 Lemma find_cycle_total:
@@ -1326,18 +1251,17 @@ Lemma find_cycle_total:
 Proof.
   intros.
   functional induction (find_cycle w).
-  - destruct w as (w, (Hw1, (Hw2, Hw3))).
-    destruct v as (v, (Hb1, Hb2)).
+  - destruct w as (?, (?, (?, ?))).
+    destruct v as (?, (?, ?)).
     eauto.
-  - apply IHo.
+  - auto.
   - apply next_edge_nil_inv in e.
-    destruct w as (w, (Hw1, (Hw2, Hw3))).
+    destruct w as (w, (Hw1, (?, Hw3))).
     destruct w.
-    contradiction Hw3; trivial. (* absurd *)
+    { contradiction Hw3; trivial. (* absurd *) }
     simpl in e.
     remember (get_incoming g (fst e0)).
-    destruct l.
-    +
+    destruct l; inversion e;  clear e.
     apply all_incoming_in with (v:=fst e0) in H.
     rewrite has_incoming_neq_nil in H.
     contradiction H; auto.
@@ -1345,12 +1269,7 @@ Proof.
     unfold Graph.In.
     exists e0.
     destruct e0.
-    intuition.
-    * inversion Hw1.
-      subst.
-      auto.
-    * apply pair_in_left.
-  + inversion e.
+    split; try (inversion Hw1; subst); auto using pair_in_left.
 Qed.
 
 End FIND_CYCLE.
@@ -1397,9 +1316,8 @@ Proof.
   apply all_pos_idegree_impl_cycle in H3; repeat auto.
   destruct H3.
   exists x.
-  apply subgraph_cycle with (g':=g) in H3; repeat auto.
+  eauto using subgraph_cycle.
 Qed.
-
 End FGRAPHS.
 
 Implicit Arguments Edge.
