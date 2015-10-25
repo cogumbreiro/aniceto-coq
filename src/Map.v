@@ -677,4 +677,17 @@ Module MapUtil (Import M:FMapInterface.WS).
     unfold eq_key.
     tauto.
   Qed.
+  
+  Lemma eq_key_in_to_ina:
+    forall {elt:Type} (k k':E.t) (e e':elt) l,
+    E.eq k' k -> 
+    List.In (k, e) l ->
+    InA (eq_key (elt:=elt)) (k', e') l.
+  Proof.
+    intros.
+    apply InA_alt.
+    exists (k, e).
+    intuition.
+  Qed.
+    
 End MapUtil.
