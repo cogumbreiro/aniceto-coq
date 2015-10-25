@@ -833,7 +833,29 @@ Proof.
   inversion H; auto.
 Qed.
 
+Lemma find_some_spec:
+  forall x l,
+  find f l = Some x ->
+  In x l /\ f x = true.
+Proof.
+  intros.
+  induction l.
+  { inversion H. }
+  simpl in H.
+  remember (f a).
+  destruct b.
+  - inversion H.
+    subst.
+    split; auto using in_eq.
+  - apply IHl in H.
+    destruct H.
+    split; auto.
+    auto using in_cons.
+Qed.
+
 End FindProps.
+
+Set Implicit Arguments.
 
 Section Sum.
   Variable A: Type.
