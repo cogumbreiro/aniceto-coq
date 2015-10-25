@@ -53,30 +53,15 @@ Inductive ABEdge : bi_edge -> Prop :=
     AB a b ->
     ABEdge ((bi_a_vertex a), (bi_b_vertex b)).
 
-Definition BiEdge (e:bi_edge) :=
-  ABEdge e \/ BAEdge e.
-
-Lemma ab_to_bi_edge:
-  forall a b,
-  AB a b ->
-  BiEdge (ab a b).
-Proof.
-  intros.
-  apply ab_edge in H.
-  unfold BiEdge.
-  auto.
-Qed.
-
-Lemma ba_to_bi_edge:
-  forall b a,
-  BA b a ->
-  BiEdge (ba b a).
-Proof.
-  intros.
-  apply ba_edge in H.
-  unfold BiEdge.
-  auto.
-Qed.
+Inductive BiEdge : bi_edge -> Prop :=
+  | ab_to_bi_edge:
+    forall a b,
+    AB a b ->
+    BiEdge (ab a b)
+  | ba_to_bi_edge:
+    forall b a,
+    BA b a ->
+    BiEdge (ba b a).
 
 Notation BiWalk := (Walk BiEdge).
 Notation BiCycle := (Cycle BiEdge).
@@ -125,29 +110,29 @@ Proof.
   eauto using bb.
 Qed.
 
-Definition BAB (b1:b_vertex) (a:a_vertex) (b2:b_vertex) :=
-  BA b1 a /\ AB a b2.
+Inductive BAB (b1:b_vertex) (a:a_vertex) (b2:b_vertex) : Prop :=
+  ba_ab_to_bab:
+    BA b1 a ->
+    AB a b2 ->
+    BAB b1 a b2.
 
-Lemma ba_ab_to_bab:
-  forall b1 a b2,
-  BA b1 a ->
-  AB a b2 ->
+Lemma b_to_bab:
+  forall b1 b2,
+  BB (b1, b2) ->
+  exists a,
   BAB b1 a b2.
 Proof.
-  unfold BAB. auto.
+  intros.
+  inversion H; subst; clear H.
+  exists a.
+  auto using ba_ab_to_bab.
 Qed.
 
-Definition ABA (a1:a_vertex) (b:b_vertex) (a2:a_vertex) :=
-  AB a1 b /\ BA b a2.
-
-Lemma ab_ba_to_aba:
-  forall a1 b a2,
-  AB a1 b ->
-  BA b a2 ->
-  ABA a1 b a2.
-Proof.
-  unfold ABA. auto.
-Qed.
+Inductive ABA (a1:a_vertex) (b:b_vertex) (a2:a_vertex) : Prop :=
+  ab_ba_to_aba:
+    AB a1 b ->
+    BA b a2 ->
+    ABA a1 b a2.
 
 Lemma bab_to_b:
   forall b1 a b2,
@@ -157,17 +142,6 @@ Proof.
   intros.
   destruct H.
   eauto using bi_edge_to_b_edge.
-Qed.
-
-Lemma b_to_bab:
-  forall b1 b2,
-  BB (b1, b2) ->
-  exists a,
-  BAB b1 a b2.
-Proof.
-  intros.
-  unfold BAB.
-  eauto using b_edge_to_bi_edge.
 Qed.
 
 Lemma aba_to_aa :
@@ -187,8 +161,8 @@ Lemma a_to_aba:
   ABA a1 b a2.
 Proof.
   intros.
-  unfold ABA.
-  auto using a_edge_to_bi_edge.
+  inversion H; subst; exists b.
+  auto using ab_ba_to_aba.
 Qed.
 
 Lemma bab_to_aba:
@@ -200,8 +174,7 @@ Proof.
   intros.
   destruct H.
   destruct H0.
-  unfold ABA.
-  auto.
+  auto using ab_ba_to_aba.
 Qed.
 
 Lemma aba_to_bab:
@@ -213,8 +186,7 @@ Proof.
   intros.
   destruct H.
   destruct H0.
-  unfold BAB.
-  auto.
+  auto using ba_ab_to_bab.
 Qed.
 
 Lemma aba_to_b:
@@ -290,9 +262,7 @@ Proof.
   exists b1.
   exists b2.
   intuition.
-  apply edge_a_to_b_def.
-  unfold ABA. auto.
-  unfold ABA. auto.
+  auto using ab_ba_to_aba, edge_a_to_b_def.
 Qed.
 
 Inductive a_to_b : a_walk -> b_walk -> Prop :=
@@ -673,9 +643,8 @@ Lemma edge_a_to_c_inv2:
   BiEdge e2.
 Proof.
   intros.
-  inversion H.
-  unfold ABA in H0.
-  destruct H0 as (H0,_).
+  inversion H; subst; clear H.
+  destruct H0.
   auto using ab_to_bi_edge.
 Qed.
 
@@ -685,9 +654,8 @@ Lemma edge_a_to_c_inv3:
   BiEdge e3.
 Proof.
   intros.
-  inversion H.
-  unfold ABA in H0.
-  destruct H0 as (_,H0).
+  inversion H; subst; clear H.
+  destruct H0.
   auto using ba_to_bi_edge.
 Qed.
 
@@ -710,9 +678,7 @@ Proof.
   inversion H.
   subst.
   exists b.
-  apply edge_a_to_c_def.
-  unfold ABA.
-  auto.
+  auto using edge_a_to_c_def, ab_ba_to_aba.
 Qed.
 
 Let a_to_c_total_1:
@@ -729,10 +695,9 @@ Proof.
     + apply a_to_c_nil.
     + assumption.
   - inversion H; subst.
-    unfold ABA in H1.
-    destruct H1 as (H1, H2).
-    apply ab_to_bi_edge in H1.
-    apply ba_to_bi_edge in H2.
+    destruct H1.
+    apply ab_to_bi_edge in H0.
+    apply ba_to_bi_edge in H1.
     auto using edge2_to_walk.
 Qed.
 
@@ -800,10 +765,9 @@ Proof.
   intros.
   apply a_to_aba in H.
   destruct H as (b, H).
-  unfold ABA in H.
-  destruct H as (H1, H2).
-  apply ab_to_bi_edge in H1.
-  apply ba_to_bi_edge in H2.
+  destruct H as (Ha, Hb).
+  apply ab_to_bi_edge in Ha.
+  apply ba_to_bi_edge in Hb.
   exists (cons (ab a b)
          (cons (ba b a) nil)).
   auto using edge2_to_cycle.
@@ -882,9 +846,6 @@ Proof.
     + destruct Hatoc as (bn, (Hac, Heqe)).
       destruct e. inversion Heqe; rewrite H1 in *; rewrite H5 in *; clear Heqe H1 H5.
       exists w.
-      (*
-      exists (cons (ab an bn)
-             (cons (ba bn a1) w)).*)
       subst.
       eauto using cycle_def.
     + assumption.
@@ -893,7 +854,10 @@ Qed.
 
 End CycleAtoC.
 End Bipartite.
-
+Implicit Arguments a_to_c.
+Implicit Arguments a_to_b.
+Implicit Arguments bi_a_vertex.
+Implicit Arguments bi_b_vertex.
 Implicit Arguments AA.
 Implicit Arguments BB.
 Implicit Arguments BAB.
