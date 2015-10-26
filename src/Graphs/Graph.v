@@ -16,6 +16,20 @@ Definition walk_head (default:A) (w:walk) : A := head (List.hd (default, default
 
 Definition Linked e w := tail e = walk_head (tail e) w.
 
+Lemma linked_nil:
+  forall e,
+  Linked e nil.
+Proof.
+  compute; auto.
+Qed.
+
+Lemma linked_eq:
+  forall v1 v2 v3 w,
+  Linked (v1,v2) ((v2,v3)::w).
+Proof.
+  compute;auto.
+Qed.
+
 Inductive Connected : walk -> Prop :=
   | connected_cons:
     forall e w,
@@ -80,12 +94,9 @@ Proof.
   - destruct IHw as (e', H).
     inversion H; subst.
     + exists a.
-      apply end_cons.
-      apply end_nil.
+      auto using end_cons, end_nil.
     + exists e'.
-      apply end_cons.
-      apply end_cons.
-      assumption.
+      auto using end_cons.
 Qed.
 
 Lemma end_inv2:
@@ -108,13 +119,9 @@ Proof.
   intros.
   induction w.
   - inversion H.
-  - inversion H; inversion H0; subst.
-    + assumption.
+  - inversion H; inversion H0; subst; auto.
     + inversion H7. (* absurd *)
     + inversion H4. (* absurd *)
-    + apply IHw.
-      assumption.
-      assumption.
 Qed.
 
 Lemma end_cons_eq:
@@ -125,9 +132,7 @@ Lemma end_cons_eq:
 Proof.
   intros.
   assert (H1 := end_cons e' H).
-  apply end_det with (w:=(e'::w)).
-  assumption.
-  assumption.
+  eauto using end_det.
 Qed.
 
 Lemma end_in:
@@ -144,8 +149,7 @@ Proof.
       apply in_eq.
     + apply end_inv_cons in H.
       apply IHw in H; clear IHw.
-      apply in_cons.
-      assumption.
+      auto using in_cons.
 Qed.
 
 Definition StartsWith (w:walk) (v:A) :=
@@ -164,8 +168,7 @@ Proof.
   destruct H as (e', (H,H1)).
   exists e'.
   intuition.
-  apply end_cons.
-  assumption.
+  auto using end_cons.
 Qed.
 
 Lemma ends_with_nil_inv:
@@ -314,10 +317,8 @@ Proof.
   - inversion H.
     subst.
     apply IHw in H4.
-    apply_auto walk_cons.
-    apply connected_inv.
-    assumption.
-    inversion H0; assumption.
+    + auto using walk_cons, connected_inv.
+    + inversion H0; assumption.
 Qed.
 
 Lemma walk_to_forall:
@@ -328,14 +329,7 @@ Proof.
   intros.
   induction w.
   - auto.
-  - apply Forall_cons.
-    + inversion H.
-      subst.
-      assumption.
-    + inversion H.
-      subst.
-      apply IHw.
-      assumption.
+  - apply Forall_cons; inversion H; subst; auto.
 Qed.
 
 Lemma walk_inv:
@@ -345,9 +339,8 @@ Lemma walk_inv:
   Connected w.
 Proof.
   intros.
-  split.
-  apply walk_to_forall; assumption.
-  apply walk_to_connected; assumption.
+  split; 
+  auto using walk_to_forall, walk_to_connected.
 Qed.
 
 Lemma walk_cons2:
@@ -357,9 +350,7 @@ Lemma walk_cons2:
   Walk ((v1, v2) :: (v2, v3) :: w).
 Proof.
   intros.
-  apply_auto walk_cons.
-  compute.
-  trivial.
+  auto using walk_cons, linked_eq.
 Qed.
 
 Lemma edge_to_walk:
@@ -368,11 +359,7 @@ Lemma edge_to_walk:
   Walk (e::nil).
 Proof.
   intros.
-  apply walk_cons.
-  apply walk_nil.
-  assumption.
-  compute.
-  auto.
+  auto using walk_cons, walk_nil, linked_nil.
 Qed.
 
 Lemma edge2_to_walk:
@@ -382,11 +369,7 @@ Lemma edge2_to_walk:
   Walk ((v1,v2)::(v2,v3)::nil).
 Proof.
   intros.
-  apply walk_cons.
-  apply edge_to_walk. assumption.
-  assumption.
-  compute.
-  auto.
+  auto using walk_cons, edge_to_walk, linked_eq.
 Qed.
 
 Lemma in_edge:
@@ -399,15 +382,10 @@ Proof.
   induction w.
   inversion H0.
   apply List.in_inv in H0.
-  destruct H0.
-  subst.
-  inversion H.
-  assumption.
-  inversion H.
-  subst.
-  apply IHw in H3.
-  assumption.
-  assumption.
+  destruct H0; (
+    subst;
+    inversion H;
+    auto).
 Qed.
 
 
@@ -426,10 +404,7 @@ Proof.
     + apply end_inv in H0.
       subst.
       assumption.
-    + apply IHw.
-      assumption.
-      inversion H0.
-      assumption.
+    + apply IHw; try inversion H0; auto.
 Qed.
 
 Inductive Walk2: A -> A -> list edge -> Prop :=
@@ -447,8 +422,7 @@ Lemma walk2_nil_inv:
 Proof.
   intros.
   inversion H; subst; clear H.
-  apply ends_with_nil_inv with (v:=v2).
-  assumption.
+  eauto using ends_with_nil_inv.
 Qed.
 
 Inductive Cycle: walk -> Prop :=
@@ -492,7 +466,7 @@ Proof.
   destruct e'.
   simpl in *.
   subst.
-  apply cycle_def with (vn:=a1); repeat auto.
+  eauto using cycle_def.
 Qed.
 
 Lemma walk1_to_cycle:
@@ -501,9 +475,7 @@ Lemma walk1_to_cycle:
   Cycle ((v,v)::nil).
 Proof.
   intros.
-  apply cycle_def with (vn:=v).
-  apply end_nil.
-  assumption.
+  eauto using cycle_def, end_nil.
 Qed.
 
 Lemma edge1_to_cycle:
@@ -513,8 +485,7 @@ Lemma edge1_to_cycle:
 Proof.
   intros.
   apply edge_to_walk in H.
-  apply walk1_to_cycle.
-  assumption.
+  auto using walk1_to_cycle.
 Qed.
 
 Lemma walk2_to_cycle:
@@ -523,10 +494,7 @@ Lemma walk2_to_cycle:
   Cycle ((v1, v2) :: (v2, v1)::nil)%list.
 Proof.
   intros.
-  apply cycle_def with (vn:=v2).
-  apply end_cons.
-  apply end_nil.
-  assumption.
+  eauto using cycle_def, end_cons, end_nil.
 Qed.
 
 Lemma edge2_to_cycle:
@@ -536,12 +504,10 @@ Lemma edge2_to_cycle:
   Cycle ((v1, v2) :: (v2, v1)::nil)%list.
 Proof.
   intros.
-  assert (H': Walk ((v1, v2) :: (v2, v1)::nil)%list).
-    apply edge2_to_walk.
-    assumption.
-    assumption.
-  apply walk2_to_cycle.
-  assumption.
+  assert (H': Walk ((v1, v2) :: (v2, v1)::nil)%list). {
+    auto using edge2_to_walk.
+  }
+  auto using walk2_to_cycle.
 Qed.
 
 Let list_inv:
@@ -583,8 +549,7 @@ Proof.
       * destruct H0 as (v3, H0).
         right.
         exists v3.
-        apply in_cons.
-        assumption.
+        auto using in_cons.
   - inversion H0.
 Qed.
 
@@ -608,16 +573,14 @@ Proof.
         destruct p as (v2', v3).
         rewrite <- H2 in *.
         exists v3.
-        apply in_cons.
-        apply in_eq.
+        auto using in_cons, in_eq.
     + apply IHWalk in H0; clear IHWalk.
       destruct H0.
-      * left; apply end_cons; assumption.
+      * left; auto using end_cons.
       * destruct H0 as (v3, Hx).
         right.
         exists v3.
-        apply in_cons.
-        assumption.
+        auto using in_cons.
   - inversion H0.
 Qed.
 
@@ -646,16 +609,12 @@ Proof.
     inversion H1; subst; clear H1.
     apply in_inv_nil in H0.
     inversion H0; subst; clear H0.
-    exists vn.
-    apply in_eq.
-  - apply pred_in_walk with (v1:=v1) (v2:=v2) in H2.
-    + destruct H2 as [(w,H2)|H2].
-      * inversion H2; subst; clear H2.
-        apply end_in in H1.
-        exists vn.
-        assumption.
-      * assumption.
-    + assumption.
+    eauto using in_eq.
+  - apply pred_in_walk with (v1:=v1) (v2:=v2) in H2; auto.
+    destruct H2 as [(w,H2)|H2]; auto.
+    * inversion H2; subst; clear H2.
+      apply end_in in H1.
+      eauto.
 Qed.
 
 
@@ -673,18 +632,12 @@ Proof.
     inversion H1; subst; clear H1.
     apply in_inv_nil in H0.
     inversion H0; subst; clear H0.
-    exists vn.
-    apply in_eq.
-  - apply succ_in_walk with (v1:=v1) (v2:=v2) in H2.
-    + destruct H2 as [H2|(v4, H2)].
-      * apply end_det with (e:=(v1,v2)) in H1.
-        inversion H1; subst; clear H1.
-        exists v3.
-        apply in_eq.
-        assumption.
-      * exists v4.
-        assumption.
-    + assumption.
+    eauto using in_eq.
+  - apply succ_in_walk with (v1:=v1) (v2:=v2) in H2; auto.
+    destruct H2 as [H2|(v4, H2)]; eauto.
+    apply end_det with (e:=(v1,v2)) in H1; auto.
+    inversion H1; subst; clear H1.
+    eauto using in_eq.
 Qed.
 
 Definition In (v:A) :=
@@ -698,8 +651,7 @@ Lemma in_def:
 Proof.
   intros.
   unfold In.
-  exists e.
-  auto.
+  eauto.
 Qed.
 
 Lemma in_left:
@@ -708,8 +660,7 @@ Lemma in_left:
   In v.
 Proof.
   intros.
-  apply in_def with (e:=(v,v')); repeat auto.
-  apply pair_in_left.
+  eauto using in_def, pair_in_left.
 Qed.
 
 Lemma in_right:
@@ -718,8 +669,7 @@ Lemma in_right:
   In v.
 Proof.
   intros.
-  apply in_def with (e:=(v',v)); repeat auto.
-  apply pair_in_right.
+  eauto using in_def, pair_in_right.
 Qed.
 
 Lemma walk2_nil:
@@ -728,11 +678,8 @@ Lemma walk2_nil:
   Walk2 v1 v2 ((v1, v2)::nil).
 Proof.
   intros.
-  apply walk2_def.
-  - apply starts_with_def.
-  - apply ends_with_def with (v':=v1).
-    apply end_nil.
-  - apply edge_to_walk; repeat auto.
+  apply walk2_def;
+  eauto using starts_with_def, ends_with_def, end_nil, edge_to_walk.
 Qed.
 
 Lemma walk2_inv_cons:
@@ -758,7 +705,7 @@ Lemma walk2_inv:
 Proof.
   intros.
   assert (Hx : exists v2 : A, e = (v1, v2) /\ Edge (v1, v2)). {
-    apply walk2_inv_cons with (vn:=vn) (w:=e' :: w); repeat auto.
+    eauto using walk2_inv_cons.
   }
   destruct Hx as (v2', (?, ?)).
   exists v2'; intuition.
@@ -767,10 +714,7 @@ Proof.
   inversion H4.
   apply linked_inv in H7.
   subst.
-  apply walk2_def.
-  - apply starts_with_def.
-  - apply ends_with_inv with (e1:=(v1,v2')); assumption.
-  - assumption.
+  eauto using walk2_def, starts_with_def, ends_with_inv.
 Qed.
 
 Lemma walk2_inv_pair:
@@ -799,12 +743,7 @@ Lemma walk2_cons:
 Proof.
   intros.
   inversion H; subst.
-  apply walk2_def.
-  - apply starts_with_def.
-  - apply ends_with_cons.
-    assumption.
-  - apply walk_cons; repeat auto.
-    apply starts_with_to_linked; assumption.
+  auto using walk2_def, starts_with_def, ends_with_cons, walk_cons, starts_with_to_linked.
 Qed.
 
 Lemma walk2_concat:
@@ -834,12 +773,11 @@ Proof.
       inversion H.
       subst.
       simpl.
-      apply walk2_cons; repeat auto.
+      auto using walk2_cons.
     + apply walk2_inv in H.
       destruct H as (v, (Heq, (He, Hw))).
       inversion Heq; subst; clear Heq.
-      apply walk2_cons; repeat auto.
-      apply IHw1 with (y:=y); repeat auto.
+      eauto using walk2_cons.
 Qed.
 
 Lemma walk2_to_forall:
@@ -849,8 +787,7 @@ Lemma walk2_to_forall:
 Proof.
   intros.
   inversion H.
-  apply walk_to_forall;
-  auto.
+  auto using walk_to_forall.
 Qed.
 
 End EDGE.
@@ -993,8 +930,8 @@ Proof.
   intros.
   inversion H0.
   destruct H1.
-  apply subgraph_edge with (e:=x) (E':=E') in H1; repeat auto.
-  apply in_def with (e:=x); repeat auto.
+  apply subgraph_edge with (e:=x) (E':=E') in H1;
+  eauto using in_def.
 Qed.
 
 Lemma subgraph_walk:
@@ -1004,18 +941,7 @@ Lemma subgraph_walk:
   Walk E' w.
 Proof.
   intros.
-  assert (forall_w: List.Forall E' w).
-  assert (forall_w: List.Forall E w).
-  apply walk_to_forall; assumption.
-  rewrite List.Forall_forall in *.
-  intros.
-  apply subgraph_edge with (E:=E).
-  assumption.
-  apply forall_w.
-  assumption.
-  apply walk_def.
-  assumption.
-  apply walk_to_connected with (Edge:=E); assumption.
+  eauto using walk_impl.
 Qed.
 
 Lemma subgraph_cycle:
@@ -1025,11 +951,7 @@ Lemma subgraph_cycle:
   Cycle E' w.
 Proof.
   intros.
-  inversion H0.
-  subst.
-  apply cycle_def with (vn:=vn).
-  assumption.
-  apply subgraph_walk with (E:=E); repeat auto.
+  eauto using cycle_impl.
 Qed.
 
 Lemma walk_is_subgraph:
@@ -1040,9 +962,7 @@ Proof.
   intros.
   unfold subgraph.
   intros.
-  apply in_edge with (Edge:=E) in H0.
-  assumption.
-  assumption.
+  eauto using (in_edge (Edge:=E)).
 Qed.
 
 Lemma cycle_is_subgraph:
@@ -1053,8 +973,7 @@ Proof.
   intros.
   inversion H.
   subst.
-  apply walk_is_subgraph in H1.
-  assumption.
+  eauto using walk_is_subgraph.
 Qed.
 
 Definition Forall (E:edge -> Prop) (P: A -> Prop) :=
@@ -1069,8 +988,7 @@ Proof.
   intros.
   unfold Forall in *.
   intros.
-  apply H0.
-  apply subgraph_in with (E:=E); repeat auto.
+  auto using (subgraph_in (E:=E)).
 Qed.
 
 Lemma forall_incl:
@@ -1082,9 +1000,7 @@ Proof.
   intros.
   unfold Forall in *.
   intros.
-  apply H0 in H1.
-  apply H.
-  trivial.
+  auto.
 Qed.
 
 End SUBGRAPH.
@@ -1121,9 +1037,7 @@ Proof.
     + apply walk2_inv in H.
       destruct H as (v2, (Heq, (He,Hw))).
       rewrite <- R_to_Edge in *.
-      apply t_trans with (y:=v2).
-      * apply t_step; repeat auto.
-      * apply IHw; assumption.
+      apply t_trans with (y:=v2); auto using t_step.
 Qed.
 
 Lemma clos_trans_to_walk2:
@@ -1135,12 +1049,10 @@ Proof.
   induction H.
   - exists ((x, y) :: nil).
     rewrite R_to_Edge in *.
-    apply walk2_nil.
-    assumption.
+    auto using walk2_nil.
   - destruct IHclos_trans1 as (w1, Hw1).
     destruct IHclos_trans2 as (w2, Hw2).
-    exists (w1 ++ w2).
-    apply walk2_concat with (y:=y); repeat auto.
+    eauto using walk2_concat.
 Qed.
 
 Lemma clos_trans_iff_walk2:
@@ -1151,8 +1063,7 @@ Proof.
   split.
   - apply clos_trans_to_walk2.
   - intros; destruct H.
-    apply walk2_to_clos_trans with (w:=x).
-    assumption.
+    eauto using walk2_to_clos_trans.
 Qed.
 
 End CLOS_TRANS.

@@ -31,10 +31,7 @@ Proof.
   induction l.
   - auto.
   - simpl.
-    destruct (f a).
-    + simpl.
-      auto with *.
-    + auto with *.
+    destruct (f a); simpl; auto with *.
 Qed.
 
 Lemma filter_inv:
@@ -80,8 +77,7 @@ Proof.
   intros.
   assert (f_i := filter_incl l).
   unfold incl in f_i.
-  apply f_i.
-  assumption.
+  auto.
 Qed.
 
 Lemma filter_refl:
@@ -170,16 +166,12 @@ Proof.
     rewrite forallb_forall.
     intros.
     rewrite Forall_forall in H.
-    apply H in H0.
-    apply Is_true_eq_true in H0.
-    trivial.
+    auto using Is_true_eq_true.
   + intros.
     rewrite forallb_forall in H.
     rewrite Forall_forall.
     intros.
-    apply Is_true_eq_left.
-    apply H.
-    assumption.
+    auto using Is_true_eq_left.
 Qed.
 
 End LISTS.
@@ -208,14 +200,14 @@ Lemma feedback_filter_incl:
 Proof.
   intros.
   elim l using feedback_filter_rec.
-  - intros.
-    apply incl_refl.
+  - auto using incl_refl.
   - intros. clear l. rename l0 into l.
     remember (filter (f l) l) as l'.
-    assert (Hx : incl l' l).
-    rewrite Heql'.
-    apply filter_incl.
-    apply incl_tran with (m:=l'); repeat auto.
+    assert (Hx : incl l' l). {
+      rewrite Heql'.
+      apply filter_incl.
+    }
+    eauto using incl_tran.
 Qed.
 
 Lemma feedback_filter_simpl:
@@ -236,10 +228,9 @@ Let if_list_eq_dec_eq:
   (if list_eq_dec eq_dec l l then a else b) = a.
 Proof.
   intros.
-  destruct (list_eq_dec eq_dec l l).
-  - auto.
-  - contradiction n.
-    auto.
+  destruct (list_eq_dec eq_dec l l); (
+    try (contradiction n); auto
+  ).
 Qed.
 
 Let if_list_eq_filter_forallb:
@@ -296,9 +287,7 @@ Proof.
       left.
       rewrite Forall_forall.
       intuition.
-      apply Is_true_eq_left.
-      apply Heqflb in H0.
-      assumption.
+      auto using Is_true_eq_left.
     + right.
       rewrite forallb_existsb in Heqflb.
       rewrite negb_false_iff in Heqflb.
@@ -332,14 +321,12 @@ Lemma feedback_filter_in_f:
   In x (feedback_filter l) -> f (feedback_filter l) x = true.
 Proof.
   intros.
-  functional induction (feedback_filter l).
-  - assert (Hf := _x).
-    symmetry in Hf.
-    rewrite filter_forallb in Hf.
-    rewrite forallb_forall in Hf.
-    apply Hf in H.
-    assumption.
-  - apply IHl0. auto.
+  functional induction (feedback_filter l); auto.
+  assert (Hf := _x).
+  symmetry in Hf.
+  rewrite filter_forallb in Hf.
+  rewrite forallb_forall in Hf.
+  auto.
 Qed.
 
 Lemma feedback_filter_in:
@@ -458,8 +445,7 @@ Proof.
    + remember (partition f l).
      destruct p.
      simpl in *.
-     apply IHl in H.
-     intuition.
+     auto.
    + apply IHl in H.
      remember (partition f l).
      destruct p.
@@ -500,11 +486,7 @@ Proof.
   destruct p as (pl, pr).
   simpl in *.
   remember (f a) as fa.
-  destruct fa.
-  - simpl.
-    auto.
-  - simpl.
-    auto with *.
+  destruct fa; simpl; auto with *.
 Qed.
 
 End PARTITION.
@@ -524,12 +506,10 @@ Proof.
   simpl in *.
   destruct H.
   - subst.
-    exists l.
-    intuition.
+    eauto.
   - apply IHlst in H.
     destruct H as (l', Hin).
-    exists l'.
-    intuition.
+    eauto.
 Qed.
 
 Lemma split_in_l:
@@ -589,13 +569,11 @@ Proof.
   simpl in H.
   destruct H.
   + subst.
-    exists b.
-    apply in_eq.
+    eauto using in_eq.
   + rewrite <- split_alt_spec in H.
     apply IHl in H; clear IHl.
     destruct H as (r, Hin).
-    exists r.
-    apply in_cons; assumption.
+    eauto using in_cons.
 Qed.
 
 Lemma in_snd_split:
@@ -634,9 +612,7 @@ Section INA_IN.
       * apply P_eq in H1.
         subst.
         apply in_eq.
-      * apply in_cons.
-        apply IHl.
-        assumption.
+      * auto using in_cons.
   Qed.
 
   Let in_to_ina:
@@ -649,9 +625,7 @@ Section INA_IN.
     + inversion H; subst; clear H.
       * apply InA_cons_hd.
         rewrite P_eq; auto.
-      * apply InA_cons_tl.
-        apply IHl.
-        assumption.
+      * auto using InA_cons_tl.
   Qed.
 
   Lemma ina_in_iff:
@@ -659,9 +633,7 @@ Section INA_IN.
     InA P a l <-> List.In a l.
   Proof.
     intros.
-    split.
-    - apply ina_to_in. assumption.
-    - apply in_to_ina. assumption.
+    split; eauto using ina_to_in, in_to_ina.
   Qed.
 End INA_IN.
 
@@ -681,8 +653,7 @@ Section NODUPA_NODUP.
         contradiction H0.
         assumption.
       + inversion H; clear H; subst.
-        apply IHl.
-        assumption.
+        auto.
   Qed.
 
   Let nodup_to_nodupa:
@@ -695,12 +666,9 @@ Section NODUPA_NODUP.
     - apply NoDupA_nil.
     - inversion H; clear H; subst.
       apply IHl in H3; clear IHl.
-      apply NoDupA_cons.
+      apply NoDupA_cons; auto.
       intuition.
-      rewrite ina_in_iff in H.
-      contradiction H.
-      assumption.
-      assumption.
+      rewrite ina_in_iff in H; auto.
   Qed.
 
   Lemma nodupa_nodup_iff:
@@ -708,9 +676,7 @@ Section NODUPA_NODUP.
     NoDupA P l <-> NoDup l.
   Proof.
     intros.
-    split.
-    - apply nodupa_to_nodup. assumption.
-    - apply nodup_to_nodupa. assumption.
+    split; eauto using nodupa_to_nodup, nodup_to_nodupa.
   Qed.
 End NODUPA_NODUP.
 Implicit Arguments filter_incl.
@@ -730,9 +696,7 @@ Proof.
   intros.
   induction l; simpl in *.
   { inversion H. }
-  destruct (f a).
-  - trivial.
-  - auto.
+  destruct (f a); auto.
 Qed.
 
 Lemma existsb_impl_find_some:
@@ -744,9 +708,7 @@ Proof.
   induction l.
   { inversion H. }
   simpl in *.
-  destruct (f a).
-  - exists a. trivial.
-  - auto.
+  destruct (f a); eauto.
 Qed.
 
 Lemma find_existsb_spec_true:
