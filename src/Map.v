@@ -78,6 +78,17 @@ Module MapUtil (Import M:FMapInterface.WS).
       auto.
   Qed.
 
+  Lemma remove_in:
+    forall {elt:Type} x y m,
+    In x (@remove elt y m) ->
+    In x m.
+  Proof.
+    intros.
+    unfold In in *.
+    destruct H as (e, Hmt).
+    eauto using remove_3.
+  Qed.
+
   Let add_not_in:
     forall {elt:Type} k k' (e:elt) m,
     ~ In k (add k' e m) ->

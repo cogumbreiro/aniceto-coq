@@ -130,6 +130,78 @@ Proof.
     + inversion Hl.
 Qed.
 
+
+  Lemma notin_contract:
+    forall (x y:A) l,
+    ~ In x (y :: l) ->
+    ~ In x l.
+  Proof.
+    intros.
+    intuition.
+  Qed.
+
+  Lemma filter_notin_to_false:
+    forall l (x:A),
+    In x l ->
+    ~ In x (filter f l) ->
+    f x = false.
+  Proof.
+    induction l; intros.
+    - inversion H.
+    - simpl in *.
+      destruct H. {
+        subst.
+        destruct (f x). {
+          contradiction H0.
+          auto using in_eq.
+        }
+        trivial.
+      }
+      destruct (f a). {
+        apply notin_contract in H0.
+        auto.
+      }
+      auto.
+  Qed.
+
+  Lemma filter_false_to_notin:
+    forall l (x:A),
+    In x l ->
+    f x = false ->
+    ~ In x (filter f l).
+  Proof.
+    intros.
+    induction l. {
+      inversion H.
+    }
+    inversion H; subst. {
+      simpl.
+      rewrite H0.
+      intuition.
+      assert (incl (filter f l) l). {
+        auto using filter_incl.
+      }
+      unfold incl in *.
+      assert (Hx := H1).
+      apply H2 in H1.
+      apply (IHl H1 Hx).
+    }
+    simpl.
+    apply IHl in H1; clear IHl.
+    remember (f a).
+    destruct b. {
+      intuition.
+      inversion H2. {
+        subst.
+        rewrite H0 in Heqb.
+        inversion Heqb.
+      }
+      auto.
+    }
+    auto.
+  Qed.
+
+
 Lemma existsb_inv:
   forall {B:Type} (a:B) l g,
   existsb g (a :: l) = true ->

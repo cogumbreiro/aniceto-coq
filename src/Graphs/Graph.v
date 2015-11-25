@@ -258,6 +258,49 @@ Proof.
   auto.
 Qed.
 
+
+  Lemma ends_with_fun:
+    forall w (x y:A),
+    EndsWith w x ->
+    EndsWith w y ->
+    x = y.
+  Proof.
+    intros.
+    induction w. {
+      apply ends_with_nil_inv in H0.
+      inversion H0.
+    }
+    destruct w. {
+      destruct a as (a, b).
+      apply ends_with_eq in H.
+      apply ends_with_eq in H0.
+      subst.
+      trivial.
+    }
+    eauto using ends_with_inv.
+  Qed.
+
+  Lemma ends_with_inv_cons_nil:
+    forall (x y z:A),
+    EndsWith ((x, y) :: nil) z ->
+    y = z.
+  Proof.
+    intros.
+    inversion H.
+    destruct H0.
+    apply end_inv in H0.
+    subst.
+    eauto.
+  Qed.
+  
+  Lemma ends_with_edge:
+    forall (x y:A),
+    EndsWith ((x, y) :: nil) y.
+  Proof.
+    intros.
+    eauto using ends_with_def, end_nil.
+  Qed.
+
 Lemma starts_with_to_linked:
   forall w v,
   StartsWith w v ->
@@ -829,6 +872,19 @@ Proof.
   split; repeat (apply walk_impl; apply H).
 Qed.
 
+Lemma walk2_impl_weak:
+  forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
+  forall w,
+  (forall e, List.In e w -> E e -> F e) ->
+  forall x y,
+  Walk2 E x y w ->
+  Walk2 F x y w.
+Proof.
+  intros.
+  inversion H0; subst; clear H0.
+  eauto using walk2_def, walk_impl_weak.
+Qed.
+
 Lemma walk2_impl:
   forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
   (forall e, E e -> F e) ->
@@ -850,6 +906,21 @@ Proof.
   intros.
   split; repeat (apply walk2_impl; apply H).
 Qed.
+
+  Lemma walk2_inv_2 {A:Type}:
+    forall E (t1 t2 t3 tn:A) w,
+    Walk2 E t1 tn ((t1, t2) :: (t2, t3) :: w) ->
+    Walk2 E t2 tn ((t2, t3) :: w).
+  Proof.
+    intros.
+    inversion H.
+    subst.
+    apply walk2_def.
+    - auto using starts_with_def.
+    - eauto using ends_with_inv.
+    - inversion H2; subst; auto.
+  Qed.
+
 
 Lemma cycle_impl_weak:
   forall {A:Type} (E: (A * A) %type -> Prop) (F: (A * A) %type -> Prop),
