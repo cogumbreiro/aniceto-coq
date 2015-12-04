@@ -700,5 +700,22 @@ Module MapUtil (Import M:FMapInterface.WS).
     exists (k, e).
     intuition.
   Qed.
-    
+
+  Lemma find_rw:
+    forall {A:Type} k (m: t A),
+    { find k m = None /\ ~ In k m }
+    + { exists e, find k m = Some e /\ MapsTo k e m }.
+  Proof.
+    intros.
+    remember (find _ _) as o.
+    symmetry in Heqo.
+    destruct o as [e|].
+    - right.
+      exists e.
+      intuition.
+    - left; intuition.
+      apply not_find_in_iff in Heqo.
+      contradiction.
+  Qed.
+
 End MapUtil.
