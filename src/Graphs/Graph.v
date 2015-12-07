@@ -233,17 +233,6 @@ Proof.
   trivial.
 Qed.
 
-Lemma linked_inv:
-  forall (v1 v2 v2' v3:A) w,
-  Linked (v1, v2) ((v2', v3) :: w) ->
-  v2' = v2.
-Proof.
-  intros.
-  unfold Linked in *.
-  unfold walk_head in *.
-  auto.
-Qed.
-
 Lemma ends_with_inv:
   forall e1 e2 w (v:A),
   EndsWith (e1 :: e2 :: w) v ->
@@ -725,6 +714,18 @@ Proof.
   eauto using starts_with_def, ends_with_def, end_nil, edge_to_walk.
 Qed.
 
+Lemma edge_to_walk2:
+  forall x y,
+  Edge (x, y) ->
+  Walk2 x y ((x, y) :: nil).
+Proof.
+  intros.
+  apply walk2_def.
+  + auto using starts_with_def.
+  + auto using ends_with_edge.
+  + auto using edge_to_walk.
+Qed.
+
 Lemma walk2_inv_cons:
   forall (v1 vn:A) e w,
   Walk2 v1 vn (e :: w) ->
@@ -739,6 +740,17 @@ Proof.
   inversion H2.
   subst.
   intuition.
+Qed.
+
+Lemma linked_inv:
+  forall (v1 v2 v2' v3:A) w,
+  Linked (v1, v2) ((v2', v3) :: w) ->
+  v2' = v2.
+Proof.
+  intros.
+  unfold Linked in *.
+  unfold walk_head in *.
+  auto.
 Qed.
 
 Lemma walk2_inv:
@@ -861,6 +873,26 @@ Lemma walk_impl:
 Proof.
   intros.
   eauto using walk_impl_weak.
+Qed.
+
+Lemma walk_map_impl:
+  forall {A:Type} (E F: (A*A)->Prop) f,
+  (forall a, E a -> F (f a)) ->
+  (forall a w, Linked a w -> Linked (f a) (map f w)) ->
+  forall w,
+  Walk E w ->
+  Walk F (map f w).
+Proof.
+  intros.
+  induction w. {
+    eauto using walk_nil.
+  }
+  inversion H1.
+  subst.
+  apply IHw in H4.
+  clear IHw.
+  simpl.
+  apply walk_cons; auto.
 Qed.
 
 Lemma walk_eq:
