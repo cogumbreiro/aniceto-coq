@@ -137,6 +137,16 @@ Qed.
 
 Definition decide P {H : Decidable P} := Decidable_witness (Decidable:=H).
 
+Lemma decide_sumbool P `{D:Decidable P}:
+  { P } + { ~ P }.
+Proof.
+  remember (Decidable_witness).
+  symmetry in Heqb.
+  destruct b.
+  - left; eauto using (Decidable_sound D).
+  - right; eauto using (Decidable_complete_alt D).
+Qed.
+
 Class HasResult (A:Type) (R:A->Prop) (P:Prop) := {
   pack_result:
     forall x, R x -> P;
