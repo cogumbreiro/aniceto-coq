@@ -193,6 +193,18 @@ Proof.
   intuition.
 Qed.
 
+Lemma starts_with_inv_nil:
+  forall (x:A),
+  StartsWith nil x -> False.
+Proof.
+  intros.
+  intuition.
+  inversion H.
+  destruct H0 as (w', Hx).
+  destruct Hx.
+  inversion H0.
+Qed.
+
 Lemma ends_with_def:
   forall v v' w,
   End w (v', v) ->
