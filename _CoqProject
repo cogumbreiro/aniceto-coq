@@ -14,4 +14,5 @@ src/Set.v
 src/Sig.v
 src/Tactics.v
 src/Spec.v
+src/EqDec.v
 
