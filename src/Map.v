@@ -1,6 +1,7 @@
 Require Coq.FSets.FMapFacts.
 Require Coq.FSets.FMapInterface.
 Require Import Coq.Lists.SetoidList.
+
 Require Aniceto.List.
 
 Lemma ina_to_in:
@@ -717,5 +718,184 @@ Module MapUtil (Import M:FMapInterface.WS).
       apply not_find_in_iff in Heqo.
       contradiction.
   Qed.
+
+Section OMap.
+  Set Implicit Arguments.
+  Variable A: Type.
+  Variable B: Type.
+
+  (** omap changes the element only if there is some return value. *)
+  Variable f : E.t -> A -> option B.
+
+  Variable m:t A.
+
+  Let adapt_f (p:E.t * A) :=
+    let (k, v) := p in
+    match f k v with
+    | Some v => Some (k,v)
+    | None => None
+    end.
+
+  Definition omap := of_list (List.omap adapt_f (to_list m)).
+
+  Let notina_inv_cons:
+    forall x a l,
+    ~ InA (eq_key (elt:=A)) x (a :: l) ->
+    ~ InA (eq_key (elt:=A)) x l.
+  Proof.
+    intros.
+    intuition.
+  Qed.
+
+  Let notina_cons:
+    forall k k' e b l,
+    ~ E.eq k k' ->
+    ~ InA (eq_key (elt:=B)) (k, e) l ->
+    ~ InA (eq_key (elt:=B)) (k, e) ((k', b) :: l).
+  Proof.
+    intros.
+    intuition.
+    inversion H1; subst.
+    - compute in H3.
+      contradiction.
+    - contradiction.
+  Qed.
+
+  Let notina_omap:
+    forall l k e e',
+    ~ InA (eq_key (elt:=A)) (k, e') l ->
+    ~ InA (eq_key (elt:=B)) (k, e) (List.omap adapt_f l).
+  Proof.
+    induction l.
+    - intros.
+      simpl.
+      intuition.
+      inversion H0.
+    - intros.
+      simpl.
+      remember (adapt_f a).
+      destruct o.
+      + simpl.
+        destruct a as (k', a).
+        simpl in Heqo.
+        destruct (f k' a).
+        * inversion Heqo; subst; clear Heqo.
+          destruct (E.eq_dec k k'). {
+            contradiction H.
+            eauto using InA_eqA.
+          }
+          assert (~ InA (eq_key (elt:=B)) (k, e) (List.omap adapt_f l)). {
+            eauto.
+          }
+          eauto.
+        * inversion Heqo.
+      + eauto.
+  Qed.
+
+  Let nodupa_omap:
+    NoDupA (eq_key (elt:=B)) (List.omap adapt_f (elements m)).
+  Proof.
+    intros.
+    assert (NoDupA (eq_key (elt:=A)) (elements m))
+    by eauto using elements_3w.
+    induction H.
+    - simpl.
+      apply NoDupA_nil.
+    - simpl.
+      remember (adapt_f x).
+      destruct o.
+      + simpl.
+        destruct x as (k', v).
+        simpl in Heqo.
+        destruct (f k' v). {
+          inversion Heqo; subst.
+          apply NoDupA_cons; auto.
+          eauto.
+        }
+        inversion Heqo.
+      + auto.
+  Qed.
+
+  Variable eq_rw:
+    forall k k',
+    E.eq k k' <-> k = k'.
+
+  Lemma in_omap_1:
+    forall k x y,
+    MapsTo k x m ->
+    f k x = Some y ->
+    MapsTo k y omap.
+  Proof.
+    intros.
+    unfold omap.
+    remember (List.omap _ _) as l.
+    apply elements_mapsto_iff in H.
+    unfold to_list in *.
+    rewrite InA_altdef in H.
+    rewrite Exists_exists in H.
+    destruct H as ((k',x'), (Hin, Heq)).
+    compute in Heq.
+    destruct Heq as (He, ?).
+    subst x.
+    subst.
+    assert (adapt_f (k, x') = Some (k, y)). {
+      simpl.
+      rewrite H0.
+      trivial.
+    }
+    apply List.in_omap_1 with (f:=adapt_f) (y:=(k,y)) in Hin; auto.
+    - rewrite of_list_1; auto.
+      rewrite InA_altdef.
+      rewrite Exists_exists.
+      exists (k, y).
+      intuition.
+      compute.
+      intuition.
+    - apply eq_rw in He.
+      subst.
+      trivial.
+  Qed.
+
+  Lemma omap_spec_2:
+    forall k x,
+    MapsTo k x omap ->
+    exists y, f k y = Some x /\ MapsTo k y m.
+  Proof.
+    intros.
+    unfold omap in *.
+    unfold to_list in *.
+    rewrite of_list_1 in H; eauto.
+    rewrite InA_altdef in H.
+    rewrite Exists_exists in H.
+    destruct H as ((k', e'), (Hin, Heq)).
+    compute in Heq.
+    destruct Heq.
+    subst.
+    apply List.in_omap_2 in Hin.
+    destruct Hin as ((a,b), (Hin, Ha)).
+    simpl in Ha.
+    remember (f a b).
+    destruct o.
+    - inversion Ha; subst; clear Ha.
+      assert (InA (eq_key_elt (elt:=A)) (k', b) (elements m)). {
+        rewrite InA_altdef.
+        rewrite Exists_exists.
+        exists (k', b).
+        intuition.
+        compute.
+        intuition.
+      }
+      apply elements_2 in H0.
+      symmetry in Heqo.
+      exists b.
+      assert (k' = k). {
+        apply eq_rw in H.
+        auto.
+      }
+      subst.
+      intuition.
+    - inversion Ha.
+  Qed.
+End OMap.
 
 End MapUtil.

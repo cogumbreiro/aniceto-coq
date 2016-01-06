@@ -953,3 +953,56 @@ Section Sum.
     auto with *.
   Qed.
 End Sum.
+
+Section OMap.
+  Set Implicit Arguments.
+  (** Defines an optional map function. *)
+  Variable A:Type.
+
+  Variable B:Type.
+
+  Variable f : A -> option B.
+
+  Definition omap l :=
+    flat_map
+    (fun x =>
+      match f x with
+      | Some x => cons x nil
+      | None => nil
+      end)
+    l.
+
+  Lemma in_omap_1:
+    forall l x y,
+    In x l ->
+    f x = Some y ->
+    In y (omap l).
+  Proof.
+    intros.
+    unfold omap.
+    rewrite in_flat_map.
+    exists x.
+    intuition.
+    rewrite H0.
+    auto using in_eq.
+  Qed.
+
+  Lemma in_omap_2:
+    forall l y,
+    In y (omap l) ->
+    exists x, (In x l /\ f x = Some y).
+  Proof.
+    unfold omap.
+    intros.
+    rewrite in_flat_map in *.
+    destruct H as (x, (Hin1, Hin2)).
+    remember (f x).
+    destruct o.
+    - inversion Hin2.
+      + subst.
+        eauto.
+      + inversion H.
+    - inversion Hin2.
+  Qed.
+
+End OMap.
