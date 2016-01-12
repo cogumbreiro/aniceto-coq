@@ -460,6 +460,7 @@ Module MapUtil (Import M:FMapInterface.WS).
       destruct H as (k, (e, Hmt)).
       eauto using H0.
   Qed.
+
   (**
     Given a predicate, pick an element from the map, otherwise the predicate
     is not matched for all elements in the map.
@@ -897,5 +898,38 @@ Section OMap.
     - inversion Ha.
   Qed.
 End OMap.
+
+Section Partition.
+  Variable elt:Type.
+  Variable f : key -> elt -> bool.
+  Variable f_prop: Proper (E.eq ==> eq ==> eq) f.
+  Lemma partition_in_1_to_all:
+    forall k m,
+    In k (fst (P.partition f m)) ->
+    In k m.
+  Proof.
+    intros.
+    unfold In in *.
+    destruct H as (e, mt).
+    remember (fst (partition f m)) as m1.
+    rewrite partition_iff_1 with (f:=f) (m:=m) (m1:=m1) in mt; eauto.
+    destruct mt.
+    eauto.
+  Qed.
+
+  Lemma partition_in_2_to_all:
+    forall k m,
+    In k (snd (P.partition f m)) ->
+    In k m.
+  Proof.
+    intros.
+    unfold In in *.
+    destruct H as (e, mt).
+    remember (snd (partition f m)) as m1.
+    rewrite partition_iff_2 with (f:=f) (m:=m) (m2:=m1) in mt; eauto.
+    destruct mt.
+    eauto.
+  Qed.
+End Partition.
 
 End MapUtil.
