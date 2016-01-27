@@ -821,7 +821,7 @@ Section OMap.
     forall k k',
     E.eq k k' <-> k = k'.
 
-  Lemma in_omap_1:
+  Lemma omap_1:
     forall k x y,
     MapsTo k x m ->
     f k x = Some y ->
@@ -857,7 +857,7 @@ Section OMap.
       trivial.
   Qed.
 
-  Lemma omap_spec_2:
+  Lemma omap_2:
     forall k x,
     MapsTo k x omap ->
     exists y, f k y = Some x /\ MapsTo k y m.
