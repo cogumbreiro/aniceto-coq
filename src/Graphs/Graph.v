@@ -857,6 +857,18 @@ Proof.
   auto using walk_to_forall.
 Qed.
 
+Lemma walk2_to_edge:
+  forall v1 v2 x y w,
+  Walk2 x y w ->
+  List.In (v1,v2) w ->
+  Edge (v1, v2).
+Proof.
+  intros.
+  apply walk2_to_forall in H.
+  rewrite Forall_forall in H.
+  eauto.
+Qed.
+
 End EDGE.
 
 End Walk.
@@ -1180,5 +1192,142 @@ Proof.
   - intros; destruct H.
     eauto using walk2_to_clos_trans.
 Qed.
-
 End CLOS_TRANS.
+
+Section PROPS.
+  Lemma clos_trans_impl:
+    forall {A:Type} (P Q: relation A),
+    (forall x y, P x y -> Q x y) ->
+    forall x y,
+    clos_trans A P x y ->
+    clos_trans A Q x y.
+  Proof.
+    intros.
+    induction H0.
+    - auto using t_step.
+    - eauto using t_trans.
+  Qed.
+
+  Lemma walk2_impl_cycle:
+    forall {A:Type} (E:A*A -> Prop) x w,
+    Walk2 E x x w ->
+    Cycle E w.
+  Proof.
+    intros.
+    inversion H; subst.
+    inversion H0; subst.
+    destruct H3 as (w', (?, ?)).
+    destruct x0 as (a,b).
+    simpl in *.
+    subst.
+    eauto using cycle_def2.
+  Qed.
+
+  Lemma cycle_to_walk:
+    forall {A:Type} (Edge:A*A -> Prop) w,
+    Cycle Edge w ->
+    Walk Edge w.
+  Proof.
+    intros.
+    inversion H; eauto.
+  Qed.
+
+  Lemma walk2_from_walk:
+    forall {A:Type} E F (x y: A) w,
+    Walk2 E x y w ->
+    Walk F w ->
+    Walk2 F x y w.
+  Proof.
+    intros.
+    destruct H.
+    eauto using walk2_def.
+  Qed.
+
+  Lemma clos_trans_cycle_impl:
+    forall {A:Type} (P Q: relation A),
+    (forall x y z w, P z x -> P y w -> P x y -> Q x y) ->
+    forall x,
+    clos_trans A P x x ->
+    clos_trans A Q x x.
+  Proof.
+    intros.
+    pose (E:= (fun e => P (fst e) (snd e))).
+    assert (W : exists w, Walk2 E x x w). {
+      apply clos_trans_to_walk2 with (R:=P); eauto.
+      intros.
+      simpl.
+      tauto.
+    }
+    destruct W as (w, W).
+    assert (Cycle E w) by eauto using walk2_impl_cycle.
+    apply clos_trans_t1n in H0.
+    pose (F:= (fun e => Q (fst e) (snd e))).
+    assert (Cycle F w). {
+      apply cycle_impl_weak with (E0:=E); intros; auto.
+      destruct e as (a, b).
+      unfold E, F in *.
+      simpl in *.
+      assert (Hc: exists c, P c a). {
+        apply pred_in_cycle with (Edge := E) in H2; auto.
+        destruct H2 as (c, H2).
+        exists c.
+        eapply walk2_to_edge in H2; eauto.
+        auto.
+      }
+      assert (Hd: exists d, P b d). {
+        apply succ_in_cycle with (Edge := E) in H2; auto.
+        destruct H2 as (d, H2).
+        exists d.
+        eapply walk2_to_edge in H2; eauto.
+        auto.
+      }
+      destruct Hc as (c, Hc).
+      destruct Hd as (d, Hd).
+      eauto.
+    }
+    apply cycle_to_walk in H2.
+    assert (Walk2 F x x w) by eauto using walk2_from_walk.
+    apply walk2_to_clos_trans with (Edge:=F) (w:=w); auto.
+    intros.
+    unfold F; simpl; tauto.
+  Qed.
+
+  Lemma clos_trans_cycle_pred_impl:
+    forall {A:Type} (P Q: relation A),
+    (forall x y z, P x y -> P y z -> Q y z) ->
+    forall x,
+    clos_trans A P x x ->
+    clos_trans A Q x x.
+  Proof.
+    intros.
+    apply clos_trans_cycle_impl with (P0:=P); auto.
+    intros.
+    eauto.
+  Qed.
+
+  Lemma clos_trans_cycle_succ_impl:
+    forall {A:Type} (P Q: relation A),
+    (forall x y z, P y z -> P x y -> Q x y) ->
+    forall x,
+    clos_trans A P x x ->
+    clos_trans A Q x x.
+  Proof.
+    intros.
+    apply clos_trans_cycle_impl with (P0:=P); auto.
+    intros.
+    eauto.
+  Qed.
+
+  Lemma clos_trans_impl_ex:
+    forall {A B:Type} f (P: relation A) (Q: relation B),
+    (forall x y, P x y -> Q (f x) (f y)) ->
+    forall x y,
+    clos_trans A P x y ->
+    clos_trans B Q (f x) (f y).
+  Proof.
+    intros.
+    induction H0.
+    - auto using t_step.
+    - eauto using t_trans.
+  Qed.
+End PROPS.
