@@ -164,6 +164,31 @@ Qed.
       auto.
   Qed.
 
+  Lemma filter_in_to_true:
+    forall l (x:A),
+    In x l ->
+    In x (filter f l) ->
+    f x = true.
+  Proof.
+    induction l; intros.
+    - inversion H.
+    - simpl in *.
+      destruct H. {
+        subst.
+        remember (f x).
+        destruct b; auto.
+        assert (In x l) by auto using filter_in.
+        assert (Hx: f x = true) by eauto.
+        rewrite Hx in Heqb.
+        inversion Heqb.
+      }
+      remember (f a).
+      destruct b. {
+        destruct H0; subst; auto.
+      }
+      auto.
+  Qed.
+
   Lemma filter_false_to_notin:
     forall l (x:A),
     In x l ->
@@ -199,6 +224,29 @@ Qed.
       auto.
     }
     auto.
+  Qed.
+
+  Lemma filter_true_to_in:
+    forall l (x:A),
+    In x l ->
+    f x = true ->
+    In x (filter f l).
+  Proof.
+    intros l.
+    induction l; intros. {
+      inversion H.
+    }
+    simpl.
+    remember (f a).
+    symmetry in Heqb.
+    destruct H.
+    - destruct b. {
+        subst; eauto using in_eq.
+      }
+      subst.
+      rewrite H0 in Heqb.
+      inversion Heqb.
+    - destruct b; eauto using in_cons.
   Qed.
 
 
