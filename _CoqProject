@@ -4,6 +4,7 @@ src/Graphs/Bipartite/Bipartite.v
 src/Graphs/Bipartite/Cycle.v
 src/Graphs/Graph.v
 src/Graphs/FGraph.v
+src/Graphs/DAG.v
 src/ListSet.v
 src/List.v
 src/Map.v
