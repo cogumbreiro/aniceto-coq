@@ -1330,4 +1330,113 @@ Section PROPS.
     - auto using t_step.
     - eauto using t_trans.
   Qed.
+
+
+  Inductive Reaches {A:Type} E (x y:A) : Prop :=
+  | reaches_def:
+    forall w,
+    Walk2 E x y w ->
+    Reaches E x y.
+
+  Require Import Coq.Relations.Relation_Operators.
+
+  (** Reflexive closure of continue. *)
+
+  Definition ClosTransRefl {A:Type} E (x y:A) := Reaches E x y \/ x = y.
+
+  Lemma walk_to_edge:
+    forall {A:Type} (E:A*A->Prop) w e,
+    Walk E w ->
+    List.In e w ->
+    E e.
+  Proof.
+    intros.
+    apply walk_to_forall in H.
+    rewrite Forall_forall in H.
+    auto.
+  Qed.
+
+  Lemma end_to_append:
+    forall {A:Type} w (x y:A),
+    End w (x,y) ->
+    exists w', w = w' ++ ((x,y)::nil).
+  Proof.
+    intros.
+    induction w. {
+      inversion H.
+    }
+    inversion H; subst. {
+      exists nil.
+      simpl.
+      auto.
+    }
+    apply IHw in H3; clear IHw.
+    destruct H3 as (w', rw).
+    subst.
+    simpl.
+    exists (a::w').
+    auto.
+  Qed.
+
+  Lemma ends_with_alt:
+    forall {A} (x y:A),
+    EndsWith ((x, y) :: nil) y.
+  Proof.
+    intros.
+    apply ends_with_def with (v':=x).
+    auto using end_nil.
+  Qed.
+
+  Lemma ends_with_inv_append:
+    forall {A:Type} w (x y z:A),
+    EndsWith (w ++ (x, y) :: nil) z ->
+    y = z.
+  Proof.
+    intros.
+    induction w. {
+      simpl in *.
+      eauto using ends_with_eq.
+    }
+    simpl in H.
+    apply IHw.
+    inversion H; subst.
+    destruct x0  as (v1,v2).
+    destruct H0; subst.
+    inversion H0; subst. {
+      destruct w; inversion H3.
+    }
+    eauto using ends_with_def.
+  Qed.
+  Lemma walk_split:
+    forall {A:Type} (a b: A) w w' E,
+    Walk E (w ++ (a, b) :: w') ->
+    w = nil \/ (EndsWith w a /\ Walk E w /\ Walk E ((a,b)::w')).
+  Proof.
+    intros.
+    induction w. {
+      simpl in *.
+      eauto.
+    }
+    right.
+    simpl in H.
+    inversion H; subst; clear H.
+    assert (W:=H2).
+    apply IHw in H2; clear IHw.
+    destruct a0 as (x,y).
+    destruct H2 as [?|(?,(?,?))]. {
+      subst; simpl in *.
+      apply linked_inv in H4; subst.
+      repeat split; auto using ends_with_alt.
+      eauto using edge_to_walk.
+    }
+    split; auto using ends_with_cons.
+    destruct w. {
+      simpl in *.
+      apply linked_inv in H4; subst.
+      eauto using edge_to_walk.
+    }
+    auto using walk_cons.
+  Qed.
+
+
 End PROPS.
