@@ -130,6 +130,37 @@ Proof.
     + inversion Hl.
 Qed.
 
+  Lemma filter_nil_to_forallb:
+    forall l,
+    filter f l = nil ->
+    forallb (fun x : A => negb (f x)) l = true.
+  Proof.
+    induction l; intros; auto.
+    simpl in *.
+    destruct (f a); simpl in *.
+    - inversion H.
+    - auto.
+  Qed.
+
+  Lemma forallb_to_filter_nil:
+    forall l,
+    forallb (fun x => negb (f x)) l = true ->
+    filter f l = @nil A.
+  Proof.
+    induction l; intros; auto.
+    simpl in *.
+    destruct (f a); simpl in *.
+    - inversion H.
+    - auto.
+  Qed.
+
+  Lemma filter_forallb_false:
+    forall l,
+    filter f l = nil <->
+    forallb (fun x => negb (f x)) l = true.
+  Proof.
+    split; intros; auto using filter_nil_to_forallb, forallb_to_filter_nil.
+  Qed.
 
   Lemma notin_contract:
     forall (x y:A) l,
@@ -1054,3 +1085,89 @@ Section OMap.
   Qed.
 
 End OMap.
+
+Section Remove.
+
+  Lemma remove_length_lt:
+    forall {A:Type} eq_dec l (x:A),
+    length (remove eq_dec x l) <= length l.
+  Proof.
+    intros.
+    induction l.
+    - auto.
+    - simpl.
+      destruct (eq_dec _ _).
+      + intuition.
+      + simpl.
+        intuition.
+  Qed.
+
+  Lemma remove_in_length_lt:
+    forall {A:Type} eq_dec l (x:A),
+    In x l ->
+    length (remove eq_dec x l) < length l.
+  Proof.
+    induction l; intros.
+    - inversion H.
+    - simpl.
+      destruct (eq_dec x a).
+      + assert (length (remove eq_dec x l) <= length l) by eauto using remove_length_lt.
+        intuition.
+      + simpl.
+        destruct H.
+        * contradiction n; auto.
+        * intuition.
+  Qed.
+
+  Lemma remove_incl:
+    forall {A} eq_dec l (x:A),
+    incl (remove eq_dec x l) l.
+  Proof.
+    unfold incl.
+    intros.
+    induction l.
+    - inversion H.
+    - simpl in *.
+      destruct (eq_dec x a0).
+      + intuition.
+      + destruct H.
+        * intuition.
+        * eauto.
+  Qed.
+
+  Lemma remove_in:
+    forall {A} eq_dec l (x y:A),
+    In x (remove eq_dec y l) ->
+    In x l.
+  Proof.
+    intros.
+    induction l; auto.
+    simpl in *.
+    destruct (eq_dec _ _).
+    - subst. auto.
+    - destruct H; subst; auto.
+  Qed.
+
+  Lemma remove_in_neq:
+    forall {A:Type} eq_dec l x,
+    List.In x l ->
+    forall (y:A),
+    y <> x ->
+    List.In x (remove eq_dec y l).
+  Proof.
+    intros.
+    induction l.
+    - inversion H.
+    - simpl in *.
+      destruct (eq_dec _ _).
+      + subst.
+        destruct H.
+        * contradiction.
+        * auto.
+      + destruct H.
+        * subst.
+          auto using in_eq.
+        * auto using in_cons.
+  Qed.
+
+End Remove.
