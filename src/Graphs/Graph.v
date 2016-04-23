@@ -1338,6 +1338,18 @@ Section PROPS.
     Walk2 E x y w ->
     Reaches E x y.
 
+  Lemma reaches_trans:
+    forall {A:Type} (x y z:A) E,
+    Reaches E x y ->
+    Reaches E y z ->
+    Reaches E x z.
+  Proof.
+    intros.
+    inversion H.
+    inversion H0.
+    eauto using walk2_concat, reaches_def.
+  Qed.
+
   Require Import Coq.Relations.Relation_Operators.
 
   (** Reflexive closure of continue. *)
@@ -1438,5 +1450,178 @@ Section PROPS.
     auto using walk_cons.
   Qed.
 
-
 End PROPS.
+
+Section EndsWith.
+  Require Import Coq.Arith.Wf_nat.
+  Require Import Coq.funind.Recdef.
+
+  Function find_end {A:Type} (l:list A) { measure length l} : option A :=
+  match l with
+  | x :: l =>
+    match l with
+    | y :: l => find_end (y::l)
+    | nil => Some x
+    end
+  | nil => None
+  end.
+  Proof.
+    intros.
+    subst.
+    simpl.
+    intuition.
+  Qed.
+
+  Lemma find_end_some:
+    forall {A:Type} (x:A*A) l,
+    find_end l = Some x ->
+    End l x.
+  Proof.
+    induction l; intros; rewrite find_end_equation in H. {
+      inversion H.
+    }
+    destruct l.
+    - inversion H; subst; eauto using end_nil.
+    - eauto using end_cons.
+  Qed.
+
+  Lemma find_end_none:
+    forall {A:Type} l,
+    find_end l = None ->
+    l = @nil (A*A).
+  Proof.
+    intros.
+    induction l. {
+      auto.
+    }
+    rewrite find_end_equation in H.
+    destruct l.
+    - inversion H.
+    - apply IHl in H; clear IHl.
+      inversion H.
+  Qed.
+
+  Lemma find_end_rw_nil:
+    forall {A:Type},
+    find_end nil = @None A.
+  Proof.
+    intros.
+    rewrite find_end_equation.
+    trivial.
+  Qed.
+
+  Definition find_ends_with {A:Type} (l:list (A*A)) :=
+  match find_end l with
+  | Some (x, y) => Some y
+  | _ => None
+  end.
+
+  Lemma find_ends_with_some:
+    forall {A:Type} (x:A) w,
+    find_ends_with w = Some x ->
+    EndsWith w x.
+  Proof.
+    intros.
+    unfold find_ends_with in *.
+    remember (find_end _).
+    symmetry in Heqo.
+    destruct o.
+    - destruct p as (a,b).
+      inversion H; subst.
+      apply find_end_some in Heqo.
+      eauto using ends_with_def.
+    - inversion H.
+  Qed.
+
+  Lemma find_ends_with_none:
+    forall {A:Type} (w:list(A*A)),
+    find_ends_with w = None ->
+    w = nil.
+  Proof.
+    intros.
+    destruct w.
+    - auto.
+    - unfold find_ends_with in *.
+      remember (find_end _).
+      symmetry in Heqo.
+      destruct o.
+      + destruct p0 as (a,b).
+        inversion H.
+      + apply find_end_none in Heqo.
+        inversion Heqo.
+  Qed.
+
+  Lemma find_ends_with_cons_cons_1:
+    forall {A:Type} e1 e2 w (x:A),
+    find_ends_with (e2 :: w) = Some x ->
+    find_ends_with (e1 :: e2 :: w) = Some x.
+  Proof.
+    intros.
+    unfold find_ends_with in *.
+    rewrite find_end_equation.
+    auto.
+  Qed.
+
+  Lemma find_ends_with_cons_cons_2:
+    forall {A:Type} e1 e2 w (x:A),
+    find_ends_with (e1 :: e2 :: w) = Some x ->
+    find_ends_with (e2 :: w) = Some x.
+  Proof.
+    intros.
+    unfold find_ends_with in *.
+    rewrite find_end_equation in H.
+    auto.
+  Qed.
+
+  Lemma ends_with_dec {A:Type} w:
+    { exists (x:A), EndsWith w x } + { w = nil}.
+  Proof.
+    remember (find_ends_with w).
+    symmetry in Heqo.
+    destruct o.
+    - eauto using find_ends_with_some.
+    - eauto using find_ends_with_none.
+  Qed.
+
+  Lemma ends_with_neq_nil:
+    forall {A:Type} w,
+    w <> nil ->
+    exists (x:A), EndsWith w x.
+  Proof.
+    intros.
+    destruct (ends_with_dec w).
+    - auto.
+    - contradiction.
+  Qed.
+
+  Lemma ends_with_to_find_ends_with:
+    forall {A:Type} w (x:A),
+    EndsWith w x ->
+    find_ends_with w = Some x.
+  Proof.
+    induction w; intros. {
+      apply ends_with_nil_inv in H; inversion H.
+    }
+    destruct w. {
+      destruct a as (a1, a2).
+      apply ends_with_eq in H; subst.
+      unfold find_ends_with.
+      rewrite find_end_equation.
+      trivial.
+    }
+    apply ends_with_inv in H.
+    eapply find_ends_with_cons_cons_1; eauto.
+  Qed.
+
+  Lemma ends_with_non_nil:
+    forall {A:Type} w (y:A),
+    EndsWith w y ->
+    w <> nil.
+  Proof.
+    intuition.
+    subst.
+    eauto using ends_with_nil_inv.
+  Qed.
+
+
+End EndsWith.
