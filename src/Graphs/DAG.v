@@ -539,7 +539,7 @@ Section Props.
   Proof.
     induction w; intros; remember (find_path _ _); symmetry in Heql. {
       subst.
-      auto using ListSet.incl_nil_any.
+      auto using incl_nil_any.
     }
     subst.
     rewrite find_path_equation in H.

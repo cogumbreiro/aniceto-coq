@@ -1170,4 +1170,257 @@ Section Remove.
         * auto using in_cons.
   Qed.
 
+  Lemma no_dup_remove:
+    forall {A:Type} (l:list A),
+    NoDup l ->
+    forall (x:A) eq_dec,
+    NoDup (remove eq_dec x l).
+  Proof.
+    induction l; intros; auto.
+    inversion H; subst; clear H.
+    simpl.
+    destruct (eq_dec x a).
+    - eauto.
+    - apply NoDup_cons.
+      + unfold not; intros.
+        contradiction H2.
+        eauto using remove_in.
+      + eauto.
+  Qed.
+
 End Remove.
+
+Section Incl.
+  Variable A:Type.
+Lemma incl_nil_nil:
+  @incl A nil nil.
+Proof.
+  unfold incl.
+  intros.
+  inversion H.
+Qed.
+
+Lemma incl_nil_eq:
+  forall (l:list A),
+  incl l nil ->
+  l = nil.
+Proof.
+  intros.
+  destruct l.
+  auto.
+  unfold incl in H.
+  assert (absurd : In a nil).
+  apply H.
+  apply in_eq.
+  inversion absurd.
+Qed.
+
+Variable eq_dec : forall (v1 v2:A), {v1 = v2} + {v1 <> v2}.
+
+Lemma incl_cons_eq:
+  forall (a:A) l1 l2,
+  In a l2 ->
+  incl l1 (a :: l2) ->
+  incl l1 l2.
+Proof.
+  intros.
+  unfold incl.
+  intros.
+  destruct (eq_dec a a0).
+  - subst; assumption.
+  - unfold incl in H0.
+    assert (H' := H0 a0); clear H0.
+    apply H' in H1.
+    inversion H1.
+    subst. assumption.
+    assumption.
+Qed.
+
+Lemma incl_absurd:
+  forall (a:A) l,
+  incl (a :: l) nil -> False.
+Proof.
+  intros.
+  unfold incl in H.
+  assert (Hx : In a (a::l)).
+  apply in_eq.
+  apply H in Hx.
+  inversion Hx.
+Qed.
+
+Lemma incl_nil_any:
+  forall (l:list A),
+  incl nil l.
+Proof.
+  intros.
+  unfold incl.
+  intros.
+  inversion H.
+Qed.
+
+Lemma incl_strengthten:
+  forall (a:A) l1 l2,
+  incl (a :: l1) l2 ->
+  incl l1 l2.
+Proof.
+  intros.
+  unfold incl in *.
+  intros.
+  assert (H1 := H a0).
+  apply in_cons with (a:=a) in H0.
+  apply H1 in H0; assumption.
+Qed.
+
+Lemma incl_cons_in:
+  forall (a:A) l1 l2,
+  incl (a :: l1) l2 ->
+  In a l2.
+Proof.
+  intros.
+  unfold incl in *.
+  assert (Ha := H a).
+  apply Ha.
+  apply in_eq.
+Qed.
+
+Lemma incl_remove_1:
+  forall l1 ll (a:A) lr,
+  incl l1 (ll ++ a :: lr) ->
+  ~ In a l1 ->
+  incl l1 (ll ++ lr).
+Proof.
+  intros.
+  unfold incl.
+  intros.
+  destruct (eq_dec a0 a).
+  - subst; contradiction H0.
+  - unfold incl in H.
+    apply H in H1.
+    rewrite in_app_iff in *.
+    destruct H1.
+    * auto.
+    * inversion H1.
+      intuition.
+      symmetry in H2; apply n in H2; inversion H2. (* absurd *)
+      auto.
+Qed.
+
+End Incl.
+
+Section NoDup.
+
+Variable A:Type.
+Variable eq_dec : forall (v1 v2:A), {v1 = v2} + {v1 <> v2}.
+
+Lemma NoDup_remove_3:
+  forall (A : Type) (l l' : list A) (a : A),
+  NoDup (l ++ a :: l') -> ~ In a l.
+Proof.
+  intros.
+  induction l.
+  - intuition.
+  - simpl in *.
+    intuition.
+    subst.
+    + inversion H.
+      subst.
+      rewrite in_app_iff in H2.
+      intuition.
+    + apply IHl.
+      * inversion H.
+        assumption.
+      * assumption.
+Qed.
+
+Lemma NoDup_app:
+  forall (A : Type) (l l' : list A),
+  NoDup (l ++ l') ->
+  NoDup l /\ NoDup l'.
+Proof.
+  intros.
+  induction l.
+  - simpl in H.
+    intuition.
+    apply NoDup_nil.
+  - simpl in *.
+    inversion H.
+    subst.
+    apply IHl in H3.
+    clear IHl.
+    destruct H3.
+    intuition.
+    apply NoDup_cons.
+    + intuition.
+    + assumption.
+Qed.
+
+Lemma NoDup_rewrite:
+  forall (A : Type) (l l' : list A) (a : A),
+  NoDup (l ++ a :: l') -> 
+  NoDup (a :: (l ++ l')).
+Proof.
+  intros.
+  assert (Hx := H).
+  apply NoDup_remove_1 in H.
+  apply NoDup_remove_2 in Hx.
+  apply NoDup_cons; repeat auto.
+Qed.  
+
+End NoDup.
+
+Section Length.
+
+Variable A:Type.
+Variable eq_dec : forall (v1 v2:A), {v1 = v2} + {v1 <> v2}.
+
+Lemma length_app:
+  forall l (a:A) r,
+  length (l ++ a :: r) = length (a :: (l ++ r)).
+Proof.
+  intros.
+  induction l.
+  - auto.
+  - simpl in *.
+    rewrite IHl.
+    auto.
+Qed.
+
+Lemma no_dup_length_le:
+  forall (l1:list A) l2,
+  NoDup l1 ->
+  NoDup l2 ->
+  incl l1 l2 ->
+  length l1 <= length l2.
+Proof.
+  intros.
+  generalize H0; clear H0.
+  generalize H1; clear H1.
+  generalize l2.
+  induction l1.
+  - intros. auto with *.
+  - intros.
+    assert (In a l0).
+    unfold incl in H1.
+    apply H1.
+    apply in_eq.
+    apply in_split in H2.
+    destruct H2 as (ll, (lr, Heq)).
+    rewrite Heq.
+    assert (length l1 <= length (ll ++ lr)).
+    apply IHl1.
+    + inversion H.
+      assumption.
+    + subst.
+      apply incl_strengthten in H1.
+      apply incl_remove_1 in H1; repeat auto.
+      inversion H.
+      assumption.
+    + subst.
+      apply NoDup_remove_1 with (a:=a);
+      assumption.
+    + rewrite length_app.
+      simpl.
+      apply Le.le_n_S.
+      assumption.
+Qed.
+End Length.

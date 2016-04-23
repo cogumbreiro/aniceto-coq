@@ -3,6 +3,7 @@ Set Implicit Arguments.
 Require Import Coq.Lists.ListSet.
 Require Import Coq.Lists.List.
 Require Import Coq.Sorting.Permutation.
+Require Import Aniceto.List.
 Section LISTS.
 
 Variable A:Type.
@@ -146,95 +147,7 @@ Proof.
       rewrite H3.
       auto.
 Qed.
-      
-Let incl_nil_nil:
-  @incl A nil nil.
-Proof.
-  unfold incl.
-  intros.
-  inversion H.
-Qed.
 
-Let incl_nil_eq:
-  forall (l:list A),
-  incl l nil ->
-  l = nil.
-Proof.
-  intros.
-  destruct l.
-  auto.
-  unfold incl in H.
-  assert (absurd : In a nil).
-  apply H.
-  apply in_eq.
-  inversion absurd.
-Qed.
-
-Lemma incl_cons_eq:
-  forall (a:A) l1 l2,
-  In a l2 ->
-  incl l1 (a :: l2) ->
-  incl l1 l2.
-Proof.
-  intros.
-  unfold incl.
-  intros.
-  destruct (eq_dec a a0).
-  - subst; assumption.
-  - unfold incl in H0.
-    assert (H' := H0 a0); clear H0.
-    apply H' in H1.
-    inversion H1.
-    subst. assumption.
-    assumption.
-Qed.
-
-Lemma incl_absurd:
-  forall (a:A) l,
-  incl (a :: l) nil -> False.
-Proof.
-  intros.
-  unfold incl in H.
-  assert (Hx : In a (a::l)).
-  apply in_eq.
-  apply H in Hx.
-  inversion Hx.
-Qed.
-
-Lemma incl_nil_any:
-  forall (l:list A),
-  incl nil l.
-Proof.
-  intros.
-  unfold incl.
-  intros.
-  inversion H.
-Qed.
-
-Lemma incl_strengthten:
-  forall (a:A) l1 l2,
-  incl (a :: l1) l2 ->
-  incl l1 l2.
-Proof.
-  intros.
-  unfold incl in *.
-  intros.
-  assert (H1 := H a0).
-  apply in_cons with (a:=a) in H0.
-  apply H1 in H0; assumption.
-Qed.
-
-Lemma incl_cons_in:
-  forall (a:A) l1 l2,
-  incl (a :: l1) l2 ->
-  In a l2.
-Proof.
-  intros.
-  unfold incl in *.
-  assert (Ha := H a).
-  apply Ha.
-  apply in_eq.
-Qed.
 
 (***************************************) 
 
@@ -283,157 +196,22 @@ Proof.
   apply Permutation_length ; repeat auto.
 Qed.
 
-Lemma NoDup_remove_3:
-  forall (A : Type) (l l' : list A) (a : A),
-  NoDup (l ++ a :: l') -> ~ In a l.
-Proof.
-  intros.
-  induction l.
-  - intuition.
-  - simpl in *.
-    intuition.
-    subst.
-    + inversion H.
-      subst.
-      rewrite in_app_iff in H2.
-      intuition.
-    + apply IHl.
-      * inversion H.
-        assumption.
-      * assumption.
-Qed.
-
-Lemma NoDup_app:
-  forall (A : Type) (l l' : list A),
-  NoDup (l ++ l') ->
-  NoDup l /\ NoDup l'.
-Proof.
-  intros.
-  induction l.
-  - simpl in H.
-    intuition.
-    apply NoDup_nil.
-  - simpl in *.
-    inversion H.
-    subst.
-    apply IHl in H3.
-    clear IHl.
-    destruct H3.
-    intuition.
-    apply NoDup_cons.
-    + intuition.
-    + assumption.
-Qed.
-
-Lemma NoDup_rewrite:
-  forall (A : Type) (l l' : list A) (a : A),
-  NoDup (l ++ a :: l') -> 
-  NoDup (a :: (l ++ l')).
-Proof.
-  intros.
-  assert (Hx := H).
-  apply NoDup_remove_1 in H.
-  apply NoDup_remove_2 in Hx.
-  apply NoDup_cons; repeat auto.
-Qed.  
-
-Lemma incl_remove_1:
-  forall l1 ll (a:A) lr,
-  incl l1 (ll ++ a :: lr) ->
-  ~ In a l1 ->
-  incl l1 (ll ++ lr).
-Proof.
-  intros.
-  unfold incl.
-  intros.
-  destruct (eq_dec a0 a).
-  - subst; contradiction H0.
-  - unfold incl in H.
-    apply H in H1.
-    rewrite in_app_iff in *.
-    destruct H1.
-    * auto.
-    * inversion H1.
-      intuition.
-      symmetry in H2; apply n in H2; inversion H2. (* absurd *)
-      auto.
-Qed.
-
-Lemma length_app:
-  forall l (a:A) r,
-  length (l ++ a :: r) = length (a :: (l ++ r)).
-Proof.
-  intros.
-  induction l.
-  - auto.
-  - simpl in *.
-    rewrite IHl.
-    auto.
-Qed.
-
-Lemma no_dup_length_le:
-  forall (l1:list A) l2,
-  NoDup l1 ->
-  NoDup l2 ->
-  incl l1 l2 ->
-  length l1 <= length l2.
-Proof.
-  intros.
-  generalize H0; clear H0.
-  generalize H1; clear H1.
-  generalize l2.
-  induction l1.
-  - intros. auto with *.
-  - intros.
-    assert (In a l0).
-    unfold incl in H1.
-    apply H1.
-    apply in_eq.
-    apply in_split in H2.
-    destruct H2 as (ll, (lr, Heq)).
-    rewrite Heq.
-    assert (length l1 <= length (ll ++ lr)).
-    apply IHl1.
-    + inversion H.
-      assumption.
-    + subst.
-      apply incl_strengthten in H1.
-      apply incl_remove_1 in H1; repeat auto.
-      inversion H.
-      assumption.
-    + subst.
-      apply NoDup_remove_1 with (a:=a);
-      assumption.
-    + rewrite length_app.
-      simpl.
-      apply Le.le_n_S.
-      assumption.
-Qed.
-
 Lemma set_length_le:
   forall l1 l2,
   incl l1 l2 ->
   set_length l1 <= set_length l2. 
 Proof.
   intros.
-  assert (NoDup (as_set l1)).
-  apply as_set_no_dup.
-  assert (NoDup (as_set l2)).
-  apply as_set_no_dup.
+  assert (NoDup (as_set l1)) by apply as_set_no_dup.
+  assert (NoDup (as_set l2)) by apply as_set_no_dup.
   unfold set_length.
   remember (as_set l1) as l1'.
   remember (as_set l2) as l2'.
-  apply no_dup_length_le.
-  auto.
-  auto.
+  apply no_dup_length_le; auto.
+  assert (incl (as_set l1) l1) by apply as_set_def2.
+  assert (incl l2 (as_set l2)) by apply as_set_def1.
   subst.
-  assert (incl (as_set l1) l1).
-  apply as_set_def2.
-  assert (incl l2 (as_set l2)).
-  apply as_set_def1.
-  assert (incl (as_set l1) l2).
-  apply incl_tran with (m:=l1); repeat auto.
-  apply incl_tran with (m:=l2); repeat auto.
+  eauto using incl_tran.
 Qed.
 
 Lemma set_length_succ:
@@ -452,50 +230,12 @@ Proof.
   - auto.
 Qed.
 
-Lemma minus_lt_0:
-  forall n m,
-  n < m ->
-  n - m = 0.
-Proof.
-  induction n.
-  - auto.
-  - intros.
-    destruct m.
-    + inversion H.
-    + apply IHn.
-      apply Lt.lt_S_n.
-      assumption.
-Qed.
-
-Lemma lt_lt_minus:
-  forall n m,
-  (S n) < m ->
-  m - (S n) < m.
-Proof.
-  intros.
-  destruct n, m.
-  + inversion H.
-  + auto with *.
-  + auto with *.
-  + auto with *.
-Qed.
-
-Lemma minus_lt_compat:
+Let minus_lt_compat:
   forall n m : nat,
   (S m) <= n ->
   n - (S m) < n - m.
 Proof.
-  induction n, m.
-  - intros.
-    inversion H.
-  - intros. inversion H.
-  - intros.
-    rewrite <- Minus.minus_n_O. (* simpl *)
-    auto with *.
-  - intros.
-    apply IHn.
-    apply Le.le_S_n in H.
-    assumption.
+  induction n, m; eauto using Le.le_S_n; intuition.
 Qed.
 
 Lemma set_length_minus:
@@ -508,7 +248,6 @@ Proof.
   intros.
   apply set_length_le in H0.
   rewrite set_length_succ in *; repeat auto.
-  apply minus_lt_compat; repeat assumption.
 Qed.
 
 End LISTS.
