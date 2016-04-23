@@ -1200,20 +1200,19 @@ Proof.
   inversion H.
 Qed.
 
-Lemma incl_nil_eq:
-  forall (l:list A),
-  incl l nil ->
-  l = nil.
-Proof.
-  intros.
-  destruct l.
-  auto.
-  unfold incl in H.
-  assert (absurd : In a nil).
-  apply H.
-  apply in_eq.
-  inversion absurd.
-Qed.
+  Lemma incl_rw_nil:
+    forall {A:Type} (l:list A),
+    incl l nil ->
+    l = nil.
+  Proof.
+    unfold incl.
+    intros.
+    destruct l; auto.
+    assert (X: List.In a (a::l)) by auto using in_eq.
+    apply H in X.
+    inversion X.
+  Qed.
+
 
 Variable eq_dec : forall (v1 v2:A), {v1 = v2} + {v1 <> v2}.
 
@@ -1305,6 +1304,17 @@ Proof.
       auto.
 Qed.
 
+  Lemma incl_cons_cons:
+    forall {A:Type} l l',
+    incl l l' ->
+    forall (x:A),
+    incl (x :: l) (x :: l').
+  Proof.
+    intros.
+    eauto using incl_cons, in_eq, incl_tl.
+  Qed.
+
+
 End Incl.
 
 Section NoDup.
@@ -1365,6 +1375,17 @@ Proof.
   apply NoDup_remove_2 in Hx.
   apply NoDup_cons; repeat auto.
 Qed.  
+
+  Lemma no_dup_cons_nil:
+    forall {A:Type} (x:A),
+    NoDup (x :: nil).
+  Proof.
+    intros.
+    apply NoDup_cons.
+    - intuition.
+    - auto using NoDup_nil.
+  Qed.
+
 
 End NoDup.
 
