@@ -169,6 +169,57 @@ Proof.
   auto.
 Qed.
 
+
+  Lemma set_eq_refl:
+    forall (l:list A),
+    set_eq l l.
+  Proof.
+    intros.
+    unfold set_eq.
+    intros.
+    tauto.
+  Qed.
+
+  Lemma set_eq_symm:
+    forall (l1 l2:list A),
+    set_eq l1 l2 ->
+    set_eq l2 l1.
+  Proof.
+    unfold set_eq; intuition; apply H in H0; eauto.
+  Qed.
+
+  Lemma set_eq_def:
+    forall (l1 l2:list A),
+    incl l1 l2 ->
+    incl l2 l1 ->
+    set_eq l1 l2.
+  Proof.
+    unfold incl, set_eq.
+    split; intros; eauto.
+  Qed.
+
+  Lemma set_eq_to_incl:
+    forall (l1 l2:list A),
+    set_eq l1 l2 ->
+    incl l1 l2.
+  Proof.
+    unfold set_eq, incl.
+    intros.
+    apply H in H0.
+    assumption.
+  Qed.
+
+  Lemma set_eq_to_incl_alt:
+    forall (l1 l2:list A),
+    set_eq l1 l2 ->
+    incl l2 l1.
+  Proof.
+    unfold set_eq, incl.
+    intros.
+    apply H in H0.
+    assumption.
+  Qed.
+
 Theorem exists_no_dup:
   forall l, exists l', set_eq l l' /\ NoDup l'.
 Proof.
