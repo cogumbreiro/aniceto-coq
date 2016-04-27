@@ -759,11 +759,36 @@ Section Props.
     simpl in H3; contradiction H3; trivial.
   Qed.
 
+  Let find_outgoing_rw_cons:
+    forall v1 v2 es,
+    find_outgoing v1 ((v1, v2) :: es) = Some (v1, v2).
+  Proof.
+    intros.
+    unfold find_outgoing.
+    simpl.
+    remember (fst_eq v1 (v1,v2)).
+    symmetry in Heqb.
+    destruct b; simpl in *; auto.
+    apply fst_eq_false in Heqb.
+    simpl in *; contradiction Heqb; auto.
+  Qed.
+
+  Let find_path_rw_cons:
+    forall v1 v2 es p l,
+    find_path v1 ((v1, v2) :: es) = p :: l ->
+    p = (v1, v2).
+  Proof.
+    intros.
+    rewrite find_path_equation in H.
+    rewrite find_outgoing_rw_cons in *.
+    inversion H; auto.
+  Qed.
+
   Lemma dag_supremum:
     forall es,
     DAG Lt es ->
     es <> nil ->
-    exists x, forall y, ~ Reaches (Edge es) x y.
+    exists x, Graph.In (Edge es) x /\ forall y, ~ Reaches (Edge es) x y.
   Proof.
     intros.
     destruct es. {
@@ -788,7 +813,16 @@ Section Props.
     }
     destruct Y as (y, Y).
     exists y.
-    eauto.
+    split; eauto.
+    inversion Y as ((e1,e2),(?,?)); subst; simpl in *.
+    assert (p = (v1,v2)) by eauto; subst.
+    apply in_def with (e:=(e1,e2)).
+    - auto using pair_in_right.
+    - unfold Edge.
+      assert (I: incl ((v1, v2) :: l) ((v1, v2) :: es)) by eauto.
+      unfold incl in *.
+      apply end_in in H1.
+      eauto.
   Qed.
   End find_o.
 
