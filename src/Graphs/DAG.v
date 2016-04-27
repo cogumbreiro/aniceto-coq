@@ -329,6 +329,18 @@ Section Props.
     simpl in *; auto.
   Qed.
 
+  Lemma dag_incl:
+    forall {A:Type} (E:A->A->Prop) es es',
+    DAG E es ->
+    incl es' es ->
+    DAG E es'.
+  Proof.
+    intros.
+    unfold DAG in *.
+    rewrite Forall_forall in *.
+    unfold incl in *.
+    eauto.
+  Qed.
 
   Section find_o.
   Variable A:Type.
