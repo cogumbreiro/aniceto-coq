@@ -19,7 +19,7 @@ Variable eq_dec : forall (v1 v2:V), {v1 = v2} + {v1 <> v2}.
 Let edge := (V*V)%type.
 Let fgraph := list edge.
 
-Notation Edge := (fun g e => @List.In edge e g).
+Definition Edge := (fun g e => @List.In edge e g).
 
 Let in_nil:
   forall v,
@@ -29,7 +29,7 @@ Proof.
   repeat (try inversion H; destruct H).
 Qed.
 
-Notation In v g := (Graph.In (Edge g) v).
+Definition In v g := (Graph.In (Edge g) v).
 
 Lemma edge_spec:
   forall g e,
@@ -45,6 +45,7 @@ Let in_cons:
   Graph.In (Edge g) v ->
   Graph.In (Edge (e :: g)) v.
 Proof.
+  unfold Edge.
   intros.
   inversion H.
   destruct H0.
@@ -113,6 +114,7 @@ Proof.
   apply existsb_exists in H.
   destruct H as (x, (x_in_g, mem_in_x)).
   apply pair_mem_prop in mem_in_x.
+  unfold In.
   eauto using in_def.
 Qed.
 
@@ -133,11 +135,8 @@ Lemma incl_to_subgraph:
   forall g g',
   incl g g' -> subgraph (Edge g) (Edge g').
 Proof.
-  intros.
-  unfold Graph.subgraph.
-  intros.
-  unfold incl in *.
-  auto.
+  unfold Edge, Graph.subgraph.
+  eauto.
 Qed.
 
 Lemma subgraph_to_incl:
@@ -181,10 +180,8 @@ Lemma subgraph_cons:
   forall (g:fgraph) e,
   subgraph (Edge g) (Edge (cons e g)).
 Proof.
-  intros.
-  unfold Graph.subgraph.
-  intros.
-  auto using List.in_cons.
+  unfold Graph.subgraph, Edge.
+  eauto using List.in_cons.
 Qed.
 
 Lemma cycle_add:
@@ -209,6 +206,7 @@ Lemma has_incoming_cons:
 Proof.
   intros.
   inversion H. subst.
+  unfold Edge in *.
   apply List.in_cons with (a:=e) in H0.
   eauto using has_incoming_def.
 Qed.
@@ -226,6 +224,7 @@ Lemma has_outgoing_cons:
 Proof.
   intros.
   inversion H. subst.
+  unfold Edge in *.
   apply List.in_cons with (a:=e) in H0.
   eauto using has_outgoing_def.
 Qed.
@@ -310,6 +309,7 @@ Lemma rm_sources_in:
   In v g.
 Proof.
   intros.
+  unfold In in *.
   eauto using subgraph_in, rm_sources_subgraph.
 Qed.
 
@@ -319,7 +319,7 @@ Lemma rm_sources_has_incoming:
   HasIncoming (rm_sources g) v.
 Proof.
   intros.
-  unfold rm_sources in *.
+  unfold In, Edge, rm_sources in *.
   destruct H as (e, (e_in_g, v_in_e)).
   assert (Hx := e_in_g).
   apply feedback_filter_in_f in e_in_g.
@@ -357,6 +357,17 @@ Proof.
   exists e.
   intuition.
   auto using filter_edge_in.
+Qed.
+
+Let edge_incl:
+  forall g g' e,
+  Edge g' e ->
+  incl g' g ->
+  Edge g e.
+Proof.
+  intros.
+  unfold Edge in *.
+  auto.
 Qed.
 
 Lemma has_outgoing_filter:
@@ -414,6 +425,7 @@ Proof.
     destruct H1.
     exists x.
     intuition.
+    unfold Edge in *.
     apply feedback_filter_in in H1.
     subst.
     assumption.
@@ -528,8 +540,10 @@ Proof.
       * inversion H0; subst.
         apply List.in_eq.
       * apply IHg in H0.
+        unfold Edge in *.
         auto using List.in_cons.
     + apply IHg in H.
+      unfold Edge in *.
       auto using List.in_cons.
 Qed.
 
@@ -659,6 +673,7 @@ Proof.
     unfold Forall in H.
     inversion H3.
     destruct H4.
+    unfold Edge in *.
     apply filter_in in H4.
     apply has_outgoing_filter; repeat auto.
     apply H.
@@ -673,6 +688,7 @@ Lemma nonempty_exists_vertex:
   g <> nil <->
   exists v, In v g.
 Proof.
+  unfold In.
   intros.
   split.
   + intros; destruct g.
@@ -680,6 +696,7 @@ Proof.
       trivial.
     - destruct e.
       exists v.
+      unfold Edge in *.
       eauto using in_left, List.in_eq.
   + intros.
     intuition.
@@ -942,6 +959,7 @@ Lemma prepend_edge3:
 Proof.
   intros.
   apply prepend_edge in H.
+  unfold  Edge in *.
   intuition.
 Qed.
 
