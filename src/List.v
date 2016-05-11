@@ -786,6 +786,7 @@ Section INA_IN.
     intros.
     split; eauto using ina_to_in, in_to_ina.
   Qed.
+
 End INA_IN.
 
 Section NODUPA_NODUP.
@@ -830,6 +831,40 @@ Section NODUPA_NODUP.
     split; eauto using nodupa_to_nodup, nodup_to_nodupa.
   Qed.
 End NODUPA_NODUP.
+
+Section InA.
+  Lemma ina_map:
+    forall {A:Type} {B:Type} (eq_a:A->A->Prop) (eq_b:B->B->Prop) f a l,
+    (forall a1 a2, eq_b (f a1) (f a2) -> eq_a a1 a2) ->
+    InA (eq_b) (f a) (map f l) ->
+    InA (eq_a) a l.
+  Proof.
+    intros.
+    intuition.
+    induction l; simpl; inversion H0; subst.
+    - rewrite InA_altdef.
+      rewrite Exists_exists.
+      exists a0.
+      intuition.
+    - auto using InA_cons.
+  Qed.
+End InA.
+Section NoDupA.
+  Lemma nodupa_map:
+    forall {A:Type} {B:Type} (f:A -> B) (eq_key_a:A -> A -> Prop) (eq_key_b: B -> B -> Prop) l,
+    (forall a1 a2, eq_key_b (f a1) (f a2) -> eq_key_a a1 a2) ->
+    NoDupA eq_key_a l ->
+    NoDupA eq_key_b (map f l).
+  Proof.
+    induction l; intros; simpl; auto.
+    inversion H0.
+    subst.
+    apply NoDupA_cons; auto.
+    intuition.
+    eapply ina_map in H1; eauto.
+  Qed.
+End NoDupA.
+
 Implicit Arguments filter_incl.
 Implicit Arguments feedback_filter.
 Implicit Arguments feedback_filter_equation.
