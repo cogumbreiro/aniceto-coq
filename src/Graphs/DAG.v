@@ -50,8 +50,6 @@ Section Finite.
 
   Definition LtEdge (e:A*A) := let (x,y) := e in Lt x y.
 
-  Definition Edge es (e:A*A) := List.In e es.
-
   Definition DAG es := Forall LtEdge es.
 
   Lemma dag_to_forall_lt:
@@ -253,7 +251,7 @@ Section Finite.
   Qed.
 
   Let dag_impl_simpl:
-    forall a b es w,
+    forall (a b:A) es w,
     Walk (Edge ((a,b)::es)) w ->
     ~ List.In (a,b) w ->
     Walk (Edge es) w.
@@ -430,6 +428,17 @@ Section Props.
   Qed.
 
   Let rm_edge e es := remove edge_eq_dec e es.
+
+  Let rm_edge_in_neq:
+    forall e es e',
+    In e' es ->
+    e' <> e ->
+    In e' (rm_edge e es).
+  Proof.
+    intros.
+    unfold rm_edge.
+    auto using remove_in_neq.
+  Qed.
 
   Let find_outgoing_some_lt:
     forall x es e,
@@ -625,9 +634,9 @@ Section Props.
 
   Let find_path_cons_nil:
     forall es x x' z,
-    DAG Lt es ->
     find_path x es = (x', z) :: nil ->
-    x' = x /\ forall e, List.In e es -> fst e <> z.
+    (x' = x /\ z = x /\ forall e, List.In e es -> e = (x,x) \/ fst e <> z) \/
+    (x' = x /\ forall e, List.In e es -> fst e <> z).
   Proof.
     intros.
     rewrite find_path_equation in *.
@@ -637,39 +646,97 @@ Section Props.
     - destruct p as (x'', z').
       apply find_outgoing_some in Heqo.
       destruct Heqo.
-      inversion H0; repeat subst; clear H0.
+      inversion H; repeat subst; clear H.
+      destruct (eq_dec x' z). {
+        subst.
+        left; repeat split; auto.
+        assert (X:= find_path_nil _ H5).
+        intros.
+        destruct e as (e1,e2).
+        destruct (pair_eq_dec eq_dec (e1,e2) (z,z)); auto.
+        right.
+        simpl.
+        apply rm_edge_in_neq with (e:=(z,z)) in H; auto.
+        unfold not; intros.
+        subst.
+        apply X in H.
+        contradiction H; trivial.
+      }
+      right.
       split; auto.
       intros (e1,e2); intros; simpl.
       destruct (pair_eq_dec eq_dec (e1,e2) (x',z)).
       + inversion e; subst; clear e.
         unfold not; intros; subst.
-        assert (n: ~ Lt z z) by eauto.
-        contradiction n.
-        apply dag_in_to_lt with (Lt:=Lt) in H1; auto.
-      + apply find_path_nil with (y:=e1) (z:=e2) in H6; auto.
-        unfold rm_edge.
-        auto using remove_in_neq.
-    - inversion H0.
+        contradiction n; trivial.
+      + apply find_path_nil with (y:=e1) (z:=e2) in H5; auto.
+    - inversion H.
+  Qed.
+
+  Let find_path_cons_nil_nrefl:
+    forall es x x' z,
+    Forall (fun x=> fst x <> snd x) es ->
+    find_path x es = (x', z) :: nil ->
+    x' = x /\ forall e, List.In e es -> fst e <> z.
+  Proof.
+    intros.
+    apply find_path_cons_nil in H0.
+    destruct H0 as [(?,(?,Hx))|?]; auto.
+    subst.
+    split; auto.
+    intros (e1,e2) Hi; simpl.
+    assert (Y:=Hi).
+    apply Hx in Hi.
+    destruct Hi; auto.
+    inversion H0; subst.
+    rewrite Forall_forall in H.
+    apply H in Y.
+    auto.
+  Qed.
+
+  Let edge_rm_edge_to_edge:
+    forall e e' es,
+    Edge (rm_edge e es) e' ->
+    Edge es e'.
+  Proof.
+    unfold Edge in *; simpl in *.
+    unfold rm_edge in *.
+    eauto using remove_in.
+  Qed.
+
+  Let dag_lt_to_nrefl:
+    forall es,
+    DAG Lt es ->
+    Forall (fun x=> fst x <> snd x) es.
+  Proof.
+    intros.
+    rewrite Forall_forall.
+    intros.
+    destruct x as (x,y).
+    simpl.
+    intuition; subst.
+    assert (n: ~ Lt y y) by eauto.
+    contradiction n.
+    apply dag_in_to_lt with (es:=es); auto.
   Qed.
 
   Let find_path_some:
     forall w (x y:A) es,
     DAG Lt es ->
     find_path x es = w ->
-    find_ends_with w = Some y ->
+    EndsWith w y ->
     forall e, List.In e es -> fst e <> y.
   Proof.
     induction w; intros. {
-      unfold find_ends_with in *.
-      rewrite find_end_rw_nil in H1.
-      inversion H1.
+      apply ends_with_nil_inv in H1; contradiction.
     }
+    assert (Reaches (Edge es) x y) by
+    eauto using find_path_to_walk2, reaches_def.
     destruct a as (v1,v2).
     destruct w. {
-      apply find_ends_with_some in H1.
       apply ends_with_eq in H1.
       subst.
-      apply find_path_cons_nil in H0; auto.
+      apply find_path_cons_nil_nrefl in H0; auto.
       destruct H0.
       subst.
       auto.
@@ -688,24 +755,8 @@ Section Props.
         destruct Heqo; subst.
         assert (n: ~ Lt x x) by eauto.
         contradiction n.
-        assert (Reaches (Edge es) v2 x). {
-          assert (Walk2 (Edge es) v2 x (p::w)). {
-            assert (Walk2 (Edge (rm_edge (x,v2) es)) v2 x (p::w)) by
-            eauto using find_path_to_walk2, find_ends_with_some, dag_impl_rm_edge, ends_with_inv.
-            apply walk2_impl with (E:=Edge (rm_edge (x, v2) es)); auto.
-            intros.
-            unfold Edge in *; simpl in *.
-            unfold rm_edge in *.
-            eauto using remove_in.
-          }
-          eauto using reaches_def.
-        }
-        assert (Reaches (Edge es) x v2) by
-        eauto using reaches_def, edge_to_walk2.
-        assert (Reaches (Edge es) x x) by
-        eauto using reaches_trans.
         apply dag_reaches_to_lt with (es:=es); auto.
-      + eauto using find_ends_with_cons_cons_2, remove_in_neq.
+      + eauto using ends_with_inv, remove_in_neq.
     - inversion H0.
   Qed.
 
@@ -728,6 +779,7 @@ Section Props.
     contradiction Heqo; trivial.
   Qed.
 
+
   Let dag_find_path:
     forall w es x y,
     DAG Lt es ->
@@ -736,7 +788,6 @@ Section Props.
     forall z, ~ Reaches (Edge es) y z.
   Proof.
     intros.
-    apply ends_with_to_find_ends_with in H1.
     assert (X: forall e, List.In e es -> fst e <> y) by eauto.
     unfold not; intros.
     assert (Y: exists (v:A), In (y,v) es). {
@@ -751,7 +802,6 @@ Section Props.
         apply walk_to_edge with (w:=(v1,v2)::w'); auto.
         auto using in_eq.
       }
-      unfold Edge in *.
       auto.
     }
     destruct Y.
@@ -824,6 +874,149 @@ Section Props.
       apply end_in in H1.
       eauto.
   Qed.
+
   End find_o.
 
 End Props.
+
+
+Section Infinum.
+
+  Variable A:Type.
+  Variable Lt: A -> A -> Prop.
+
+  Let Gt x y := Lt y x.
+
+  Lemma dag_lt_to_flip_gt:
+    forall es,
+    DAG Lt es ->
+    DAG Gt (map flip es).
+  Proof.
+    unfold DAG.
+    induction es; intros; simpl; auto.
+    inversion H; clear H.
+    apply Forall_cons; auto.
+    destruct a as (v1,v2).
+    simpl in *; subst.
+    auto.
+  Qed.
+
+  Lemma dag_flip_gt_to_lt:
+    forall es,
+    DAG Gt (map flip es) ->
+    DAG Lt es.
+  Proof.
+    unfold DAG.
+    induction es; intros; simpl; auto.
+    inversion H; clear H.
+    apply Forall_cons; auto.
+    destruct a as (v1,v2).
+    simpl in *; subst.
+    auto.
+  Qed.
+
+  Lemma dag_flip_lt_iff:
+    forall es,
+    DAG Lt es <->
+    DAG Gt (map flip es).
+  Proof.
+    intros; split; auto using dag_lt_to_flip_gt, dag_flip_gt_to_lt.
+  Qed.
+
+  Lemma dag_flip_lt_to_gt:
+    forall es,
+    DAG Lt (map flip es) ->
+    DAG Gt es.
+  Proof.
+    unfold DAG.
+    induction es; intros; simpl; auto.
+    inversion H; clear H.
+    apply Forall_cons; auto.
+    destruct a as (v1,v2).
+    simpl in *; subst.
+    auto.
+  Qed.
+
+  Lemma dag_gt_to_flip_lt:
+    forall es,
+    DAG Gt es ->
+    DAG Lt (map flip es).
+  Proof.
+    unfold DAG.
+    induction es; intros; simpl; auto.
+    inversion H; clear H.
+    apply Forall_cons; auto.
+    destruct a as (v1,v2).
+    simpl in *; subst.
+    auto.
+  Qed.
+
+  Lemma dag_flip_gt_iff:
+    forall es,
+    DAG Gt es <->
+    DAG Lt (map flip es).
+  Proof.
+    intros; split; auto using dag_gt_to_flip_lt, dag_flip_lt_to_gt.
+  Qed.
+
+  Let edge_map_flip_iff:
+    forall {A:Type} es (x y:A),
+    Edge es (y, x) <-> Edge (map flip es) (x, y).
+  Proof.
+    unfold Edge.
+    symmetry.
+    eauto using in_map_flip_iff.
+  Qed.
+
+  Let in_map_flip:
+    forall {A:Type} es (x:A),
+    Graph.In (Edge (map flip es)) x ->
+    Graph.In (Edge es) x.
+  Proof.
+    intros.
+    destruct H as ((v1,v2),(E,Hp)).
+    destruct Hp; simpl in *; subst.
+    - apply edge_map_flip_iff in E.
+      eauto using in_right.
+    - apply edge_map_flip_iff in E.
+      eauto using in_left.
+  Qed.
+
+  Variable eq_dec: forall x y : A, {x = y} + {x <> y}.
+  Variable lt_irrefl: forall x, ~ Lt x x.
+  Variable lt_trans: forall x y z, Lt x y -> Lt y z -> Lt x z.
+
+  Let gt_irrefl:
+    forall x, ~ Gt x x.
+  Proof.
+    unfold Gt.
+    auto.
+  Qed.
+
+  Let gt_trans:
+    forall x y z, Gt x y -> Gt y z -> Gt x z.
+  Proof.
+    unfold Gt; eauto.
+  Qed.
+
+  Lemma dag_infimum:
+    forall es,
+    DAG Lt es ->
+    es <> nil ->
+    exists x, Graph.In (Edge es) x /\ forall y, ~ Reaches (Edge es) y x.
+  Proof.
+    intros.
+    assert (exists x, Graph.In (Edge (map flip es)) x /\ (forall y, ~ Reaches (Edge (map flip es)) x y)). {
+      apply dag_supremum with (Lt:=Gt); auto using dag_lt_to_flip_gt, map_neq_nil.
+    }
+    destruct H1 as (x, (Hi,?)).
+    exists x.
+    split; auto.
+    unfold not; intros.
+    apply reaches_flip with (F:=Edge (map flip es)) in H2; auto.
+    apply H1 in H2; contradiction.
+    intros.
+    apply edge_map_flip_iff in H3; auto.
+  Qed.
+End Infinum.
+
