@@ -1480,3 +1480,66 @@ Proof.
       assumption.
 Qed.
 End Length.
+
+Section Map.
+
+  Lemma map_neq_nil:
+    forall {A:Type} {B:Type} (l:list A) (f:A->B),
+    l <> nil ->
+    map f l <> nil.
+  Proof.
+    intuition.
+    destruct l.
+    - auto.
+    - inversion H0.
+  Qed.
+
+End Map.
+
+Section Flip.
+  Require Import Aniceto.Pair.
+
+  Lemma in_map_flip_1:
+    forall {A:Type} es (x y:A),
+    List.In (x, y) (map flip es) ->
+    List.In (y, x) es.
+  Proof.
+    intros.
+    rewrite in_map_iff in *.
+    destruct H as ((y',x'),(Hx,?)).
+    simpl in *; inversion Hx; subst.
+    assumption.
+  Qed.
+
+  Lemma in_map_flip_2:
+    forall {A:Type} es (x y:A),
+    List.In (x, y) es ->
+    List.In (y, x) (map flip es).
+  Proof.
+    intros.
+    rewrite in_map_iff in *.
+    exists (x,y).
+    auto.
+  Qed.
+
+  Lemma in_map_flip_iff:
+    forall {A:Type} es (x y:A),
+    List.In (x, y) (map flip es) <->
+    List.In (y, x) es.
+  Proof.
+    intros.
+    split; auto using in_map_flip_1, in_map_flip_2.
+  Qed.
+
+  Lemma map_flip_rw:
+    forall {A:Type} {B:Type} (l:list (A*B)),
+    map (@flip B A) (map (@flip A B) l) = l.
+  Proof.
+    induction l; intros; auto.
+    simpl.
+    rewrite flip_rw in *.
+    rewrite IHl.
+    trivial.
+  Qed.
+
+End Flip.
