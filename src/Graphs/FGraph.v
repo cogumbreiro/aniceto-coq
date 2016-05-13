@@ -1191,3 +1191,15 @@ Implicit Arguments subgraph.
 Implicit Arguments HasIncoming.
 Implicit Arguments HasOutgoing.
 
+Section Edge.
+
+  Lemma in_incl:
+    forall {A:Type} (x:A) es es',
+    Graph.In (Edge es) x ->
+    incl es es' ->
+    Graph.In (Edge es') x.
+  Proof.
+    intros.
+    apply in_impl with (E:=Edge es); auto.
+  Qed.
+End Edge.

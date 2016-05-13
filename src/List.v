@@ -1496,6 +1496,18 @@ Section Map.
 
 End Map.
 
+Section In.
+  Lemma in_incl:
+    forall {A:Type} (x:A) l l',
+    incl l' l ->
+    List.In x l' ->
+    List.In x l.
+  Proof.
+    intros.
+    unfold incl in *; auto.
+  Qed.
+End In.
+
 Section Flip.
   Require Import Aniceto.Pair.
 
@@ -1543,3 +1555,4 @@ Section Flip.
   Qed.
 
 End Flip.
+

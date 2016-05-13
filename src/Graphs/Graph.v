@@ -1683,3 +1683,39 @@ Section Walk2.
     eauto using reaches_def, walk2_flip.
   Qed.
 End Walk2.
+
+Section In.
+  Lemma in_impl:
+    forall {A:Type} (E F:A*A -> Prop) (X:forall e, E e -> F e) (x:A),
+    In E x ->
+    In F x.
+  Proof.
+    intros.
+    destruct H as (e, (?,?)).
+    eauto using in_def.
+  Qed.
+End In.
+
+Section Reaches.
+
+  Lemma reaches_impl:
+    forall {A:Type} (x y:A) (E F:(A*A)->Prop),
+    (forall e, E e -> F e) ->
+    Reaches E x y ->
+    Reaches F x y.
+  Proof.
+    intros.
+    inversion H0.
+    eauto using walk2_impl, reaches_def.
+  Qed.
+
+  Lemma edge_to_reaches:
+    forall {A:Type} (x y:A) (E:A*A->Prop),
+    E (x,y) ->
+    Reaches E x y.
+  Proof.
+    intros.
+    eauto using reaches_def, edge_to_walk2.
+  Qed.
+
+End Reaches.
