@@ -1,3 +1,5 @@
+Set Implicit Arguments.
+
 Section PAIRS.
 Variable A:Type.
 Variable eq_dec : forall (v1 v2:A), {v1 = v2} + {v1 <> v2}.
@@ -116,3 +118,20 @@ Qed.
 Implicit Arguments pair_In.
 Implicit Arguments pair_mem.
 Implicit Arguments pair_eq_dec.
+
+
+Section Flip.
+
+  (** Reverses a pair. *)
+
+  Definition flip {A:Type} {B:Type} (e:A*B) := (snd e, fst e).
+
+  Lemma flip_rw:
+    forall {A:Type} {B:Type} (x:A*B),
+    flip (flip x) = x.
+  Proof.
+    intros.
+    destruct x.
+    auto.
+  Qed.
+End Flip.
