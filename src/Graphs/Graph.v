@@ -1625,3 +1625,61 @@ Section EndsWith.
 
 
 End EndsWith.
+
+Section Walk2.
+  Require Import Aniceto.List.
+
+  Lemma walk2_inv_eq_fst:
+    forall {A:Type} E (x y x' z:A) w,
+    Walk2 E x y ((x', z) :: w) ->
+    x' = x.
+  Proof.
+    intros.
+    inversion H; subst.
+    eauto using starts_with_eq.
+  Qed.
+
+  Lemma walk2_inv_eq_snd:
+    forall {A:Type} E (x x' y y':A),
+    Walk2 E x y ((x', y') :: nil) ->
+    y' = y.
+  Proof.
+    intros.
+    inversion H; subst.
+    eauto using ends_with_eq.
+  Qed.
+
+  Lemma walk2_flip:
+    forall {A:Type} (E F:A*A->Prop) (Impl:forall x y, E (x,y) -> F (y,x)) w (x y:A),
+    Walk2 E x y w ->
+    Walk2 F y x (rev (map flip w)).
+  Proof.
+    induction w; intros. {
+      apply walk2_nil_inv in H; contradiction.
+    }
+    simpl.
+    destruct a as (x',z).
+    assert (x'=x) by eauto using walk2_inv_eq_fst; subst.
+    assert (rw: flip (x,z) = (z,x)) by auto; rewrite rw.
+    destruct w. {
+      simpl.
+      assert (z = y) by eauto using walk2_inv_eq_snd; subst.
+      apply walk2_to_edge with (v1:=x) (v2:=y) in H; auto using in_eq.
+      auto using edge_to_walk2.
+    }
+    apply walk2_inv in H.
+    destruct H as (v2, (He,(HE,Hw))).
+    inversion He; subst; clear He; rename v2 into z.
+    eauto using walk2_concat, edge_to_walk2.
+  Qed.
+
+  Lemma reaches_flip:
+    forall {A:Type} (E F:A*A->Prop) (Impl:forall x y, E (x,y) -> F (y,x)) (x y:A),
+    Reaches E x y ->
+    Reaches F y x.
+  Proof.
+    intros.
+    inversion H.
+    eauto using reaches_def, walk2_flip.
+  Qed.
+End Walk2.
