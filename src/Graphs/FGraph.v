@@ -29,7 +29,7 @@ Proof.
   repeat (try inversion H; destruct H).
 Qed.
 
-Definition In v g := (Graph.In (Edge g) v).
+Notation In v g := (Graph.In (Edge g) v).
 
 Lemma edge_spec:
   forall g e,
@@ -114,7 +114,6 @@ Proof.
   apply existsb_exists in H.
   destruct H as (x, (x_in_g, mem_in_x)).
   apply pair_mem_prop in mem_in_x.
-  unfold In.
   eauto using in_def.
 Qed.
 
@@ -309,7 +308,6 @@ Lemma rm_sources_in:
   In v g.
 Proof.
   intros.
-  unfold In in *.
   eauto using subgraph_in, rm_sources_subgraph.
 Qed.
 
@@ -319,7 +317,7 @@ Lemma rm_sources_has_incoming:
   HasIncoming (rm_sources g) v.
 Proof.
   intros.
-  unfold In, Edge, rm_sources in *.
+  unfold Edge, rm_sources in *.
   destruct H as (e, (e_in_g, v_in_e)).
   assert (Hx := e_in_g).
   apply feedback_filter_in_f in e_in_g.
@@ -688,7 +686,6 @@ Lemma nonempty_exists_vertex:
   g <> nil <->
   exists v, In v g.
 Proof.
-  unfold In.
   intros.
   split.
   + intros; destruct g.
