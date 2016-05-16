@@ -406,13 +406,12 @@ Proof.
   auto using walk_cons, walk_nil, linked_nil.
 Qed.
 
-Lemma edge2_to_walk:
+Lemma edge_to_walk_cons_cons_nil:
   forall v1 v2 v3,
   Edge (v1, v2) ->
   Edge (v2, v3) ->
   Walk ((v1,v2)::(v2,v3)::nil).
 Proof.
-  intros.
   auto using walk_cons, edge_to_walk, linked_eq.
 Qed.
 
@@ -513,7 +512,7 @@ Proof.
   eauto using cycle_def.
 Qed.
 
-Lemma walk1_to_cycle:
+Lemma walk_to_cycle_cons_nil:
   forall v,
   Walk ((v,v)::nil) ->
   Cycle ((v,v)::nil).
@@ -522,36 +521,31 @@ Proof.
   eauto using cycle_def, end_nil.
 Qed.
 
-Lemma edge1_to_cycle:
+Lemma edge_to_cycle:
   forall v,
   Edge (v,v) ->
   Cycle ((v,v)::nil).
 Proof.
   intros.
   apply edge_to_walk in H.
-  auto using walk1_to_cycle.
+  auto using walk_to_cycle_cons_nil.
 Qed.
 
-Lemma walk2_to_cycle:
+Lemma walk_to_cycle_cons_cons_nil:
   forall v1 v2,
   Walk ((v1, v2) :: (v2, v1)::nil)%list ->
   Cycle ((v1, v2) :: (v2, v1)::nil)%list.
 Proof.
-  intros.
   eauto using cycle_def, end_cons, end_nil.
 Qed.
 
-Lemma edge2_to_cycle:
+Lemma edge_to_cycle_cons_cons_nil:
   forall v1 v2,
   Edge (v1, v2) ->
   Edge (v2, v1) ->
   Cycle ((v1, v2) :: (v2, v1)::nil)%list.
 Proof.
-  intros.
-  assert (H': Walk ((v1, v2) :: (v2, v1)::nil)%list). {
-    auto using edge2_to_walk.
-  }
-  auto using walk2_to_cycle.
+  auto using edge_to_walk_cons_cons_nil, walk_to_cycle_cons_cons_nil.
 Qed.
 
 Let list_inv:

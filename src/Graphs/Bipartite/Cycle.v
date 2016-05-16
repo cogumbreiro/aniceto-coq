@@ -399,7 +399,7 @@ Section CycleAAtoBB.
     apply C.bab_to_b in H.
     exists ((r,r) :: nil)%list.
     simpl in *.
-    auto using edge1_to_cycle.
+    auto using edge_to_cycle.
   Qed.
 
   (**

@@ -562,7 +562,7 @@ Proof.
   apply aba_refl in H.
   apply bab_to_b in H.
   exists ((r,r) :: nil)%list.
-  auto using edge1_to_cycle.
+  auto using edge_to_cycle.
 Qed.
 
 Theorem cycle_a_to_b:
@@ -698,7 +698,7 @@ Proof.
     destruct H1.
     apply ab_to_bi_edge in H0.
     apply ba_to_bi_edge in H1.
-    auto using edge2_to_walk.
+    auto using edge_to_walk_cons_cons_nil.
 Qed.
 
 Let a_to_c_total_2:
@@ -768,9 +768,7 @@ Proof.
   destruct H as (Ha, Hb).
   apply ab_to_bi_edge in Ha.
   apply ba_to_bi_edge in Hb.
-  exists (cons (ab a b)
-         (cons (ba b a) nil)).
-  auto using edge2_to_cycle.
+  eauto using edge_to_cycle_cons_cons_nil.
 Qed.
 
 
