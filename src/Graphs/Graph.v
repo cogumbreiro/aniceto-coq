@@ -1413,6 +1413,7 @@ Section PROPS.
     }
     eauto using ends_with_def.
   Qed.
+
   Lemma walk_split:
     forall {A:Type} (a b: A) w w' E,
     Walk E (w ++ (a, b) :: w') ->
@@ -1643,39 +1644,113 @@ Section Walk2.
     eauto using ends_with_eq.
   Qed.
 
-  Lemma walk2_flip:
-    forall {A:Type} (E F:A*A->Prop) (Impl:forall x y, E (x,y) -> F (y,x)) w (x y:A),
-    Walk2 E x y w ->
-    Walk2 F y x (rev (map flip w)).
-  Proof.
-    induction w; intros. {
-      apply walk2_nil_inv in H; contradiction.
-    }
-    simpl.
-    destruct a as (x',z).
-    assert (x'=x) by eauto using walk2_inv_eq_fst; subst.
-    assert (rw: flip (x,z) = (z,x)) by auto; rewrite rw.
-    destruct w. {
-      simpl.
-      assert (z = y) by eauto using walk2_inv_eq_snd; subst.
-      apply walk2_to_edge with (v1:=x) (v2:=y) in H; auto using in_eq.
-      auto using edge_to_walk2.
-    }
-    apply walk2_inv in H.
-    destruct H as (v2, (He,(HE,Hw))).
-    inversion He; subst; clear He; rename v2 into z.
-    eauto using walk2_concat, edge_to_walk2.
-  Qed.
-
-  Lemma reaches_flip:
-    forall {A:Type} (E F:A*A->Prop) (Impl:forall x y, E (x,y) -> F (y,x)) (x y:A),
-    Reaches E x y ->
-    Reaches F y x.
+  Lemma starts_with_app:
+    forall {A:Type} e w w' (x:A),
+    StartsWith ((e :: w) ++ w') x ->
+    StartsWith ((e :: w)) x.
   Proof.
     intros.
     inversion H.
-    eauto using reaches_def, walk2_flip.
+    unfold StartsWith.
+    destruct H0 as (?,(?,?)).
+    simpl in *.
+    inversion H0; subst; clear H0.
+    eauto.
   Qed.
+
+  Lemma ends_with_app:
+    forall {A:Type} w' e w (x:A),
+    EndsWith (w' ++ e :: w) x ->
+    EndsWith (e :: w) x.
+  Proof.
+    induction w'; intros; auto.
+    simpl in *.
+    destruct w'; simpl in *;
+      eauto using ends_with_inv.
+  Qed.
+
+  Lemma walk2_split:
+    forall {A:Type} E w (x:A) y a b,
+    Walk2 E x y w ->
+    List.In (a,b) w ->
+    exists wa wb, w = wa ++ (a,b) :: wb /\ (
+      (wa = nil /\ a = x) \/
+      (wb = nil /\ b = y) \/
+      (Walk2 E x a wa /\ Walk2 E b y wb)
+    ).
+  Proof.
+    intros.
+    inversion H; subst.
+    assert (X:= H0); apply in_split in X.
+    destruct X as (wa,(wb,R)).
+    exists wa; exists wb.
+    subst; split; auto.
+    destruct wa. {
+      left.
+      simpl in *.
+      apply starts_with_eq in H1.
+      intuition.
+    }
+    right.
+    destruct wb. {
+      left.
+      apply ends_with_inv_append in H2; subst.
+      auto.
+    }
+    right.
+    assert (X:=H3).
+    apply walk_split in X.
+    destruct X as [X|(?,(?,?))]. {
+      inversion X.
+    }
+    split. {
+      eauto using starts_with_app, ends_with_app, walk2_def.
+    }
+    inversion H6; subst.
+    destruct p0 as (b',c).
+    assert (b' = b) by eauto using linked_inv; subst.
+    eauto using walk2_def, starts_with_def, ends_with_inv, ends_with_app.
+  Qed.
+
+  Lemma walk2_split_to_reaches:
+    forall {A:Type} E w (x:A) y a b,
+    Walk2 E x y w ->
+    List.In (a,b) w ->
+    (a = x /\ b = y) \/
+    (a = x /\ Reaches E b y) \/
+    (b = y /\ Reaches E x a) \/
+    (Reaches E x a /\ Reaches E b y).
+  Proof.
+    intros.
+    assert (X:=H).
+    eapply walk2_split in H; eauto.
+    destruct H as (wa, (wb, (R, [(?,?)|[(?,?)|(?,?)]]))); subst; inversion X; subst; clear X.
+    - simpl in *; clear H0.
+      destruct wb. {
+        left.
+        eauto using ends_with_eq.
+      }
+      right; left.
+      inversion H2; subst.
+      destruct p as (b',c).
+      assert (b' = b) by auto using linked_eq; subst.
+      eauto using walk2_def, starts_with_def, reaches_def, ends_with_inv.
+    - destruct wa. {
+        simpl in *.
+        eauto using starts_with_eq.
+      }
+      right; right; left; intuition.
+      apply walk_split in H2.
+      destruct H2 as [?|(?,(?,?))]. {
+        inversion H2.
+      }
+      destruct p as (x', v).
+      assert (x' = x) by eauto using starts_with_eq; subst.
+      eauto using reaches_def, walk2_def, starts_with_def.
+    - right; right; right.
+      eauto using reaches_def, walk2_def.
+  Qed.
+
 End Walk2.
 
 Section In.
@@ -1713,3 +1788,40 @@ Section Reaches.
   Qed.
 
 End Reaches.
+
+Section Flip.
+
+  Lemma walk2_flip:
+    forall {A:Type} (E F:A*A->Prop) (Impl:forall x y, E (x,y) -> F (y,x)) w (x y:A),
+    Walk2 E x y w ->
+    Walk2 F y x (rev (map flip w)).
+  Proof.
+    induction w; intros. {
+      apply walk2_nil_inv in H; contradiction.
+    }
+    simpl.
+    destruct a as (x',z).
+    assert (x'=x) by eauto using walk2_inv_eq_fst; subst.
+    assert (rw: flip (x,z) = (z,x)) by auto; rewrite rw.
+    destruct w. {
+      simpl.
+      assert (z = y) by eauto using walk2_inv_eq_snd; subst.
+      apply walk2_to_edge with (v1:=x) (v2:=y) in H; auto using in_eq.
+      auto using edge_to_walk2.
+    }
+    apply walk2_inv in H.
+    destruct H as (v2, (He,(HE,Hw))).
+    inversion He; subst; clear He; rename v2 into z.
+    eauto using walk2_concat, edge_to_walk2.
+  Qed.
+
+  Lemma reaches_flip:
+    forall {A:Type} (E F:A*A->Prop) (Impl:forall x y, E (x,y) -> F (y,x)) (x y:A),
+    Reaches E x y ->
+    Reaches F y x.
+  Proof.
+    intros.
+    inversion H.
+    eauto using reaches_def, walk2_flip.
+  Qed.
+End Flip.
