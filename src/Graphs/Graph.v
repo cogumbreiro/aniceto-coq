@@ -1669,6 +1669,76 @@ Section Walk2.
       eauto using ends_with_inv.
   Qed.
 
+  Lemma walk_split_snd:
+    forall {A:Type} (eq_dec: forall (x y:A), {x = y} + {x <> y}) E w (e:A*A),
+    List.In e w ->
+    Walk E w ->
+    (exists w1 w2, w = w1 ++ e :: w2 /\ ~ List.In e w2).
+  Proof.
+    induction w as [|e']; intros. {
+      inversion H.
+    }
+    inversion H0; subst.
+    destruct H. {
+      subst.
+      destruct (in_dec (pair_eq_dec eq_dec) e w). {
+        apply IHw in i; auto.
+        destruct i as (l1,(l2,(X,?))).
+        subst.
+        exists (e::l1).
+        exists l2.
+        auto.
+      }
+      exists nil.
+      simpl.
+      exists w.
+      auto.
+    }
+    eapply IHw in H3; eauto.
+    destruct H3 as (l1,(l2,(?,?))).
+    subst.
+    exists (e'::l1).
+    exists l2.
+    auto.
+  Qed.
+
+  Lemma walk_split_fst:
+    forall {A:Type} (eq_dec: forall (x y:A), {x = y} + {x <> y}) E w (e:A*A),
+    List.In e w ->
+    Walk E w ->
+    (exists w1 w2, w = w1 ++ e :: w2 /\ ~ List.In e w1).
+  Proof.
+    induction w as [|e']; intros. {
+      inversion H.
+    }
+    inversion H0; subst.
+    destruct H. {
+      subst.
+      exists nil.
+      simpl.
+      exists w.
+      intuition.
+    }
+    eapply IHw in H3; eauto.
+    destruct H3 as (l1,(l2,(?,?))).
+    subst.
+    destruct (pair_eq_dec eq_dec e e'). {
+      subst.
+      exists nil.
+      simpl.
+      exists (l1 ++ e' :: l2 ).
+      intuition.
+    }
+    exists (e'::l1).
+    exists l2.
+    simpl.
+    split; auto.
+    unfold not; intros.
+    destruct H1.
+    - contradiction n; auto.
+    - contradiction.
+  Qed.
+
   Lemma walk2_split:
     forall {A:Type} E w (x:A) y a b,
     Walk2 E x y w ->
@@ -1712,43 +1782,165 @@ Section Walk2.
     eauto using walk2_def, starts_with_def, ends_with_inv, ends_with_app.
   Qed.
 
-  Lemma walk2_split_to_reaches:
+  Let walk2_split_neq:
     forall {A:Type} E w (x:A) y a b,
     Walk2 E x y w ->
     List.In (a,b) w ->
-    (a = x /\ b = y) \/
-    (a = x /\ Reaches E b y) \/
-    (b = y /\ Reaches E x a) \/
-    (Reaches E x a /\ Reaches E b y).
+    x <> a ->
+    y <> b ->
+    exists wa wb, w = wa ++ (a,b) :: wb /\ Walk2 E x a wa /\ Walk2 E b y wb.
   Proof.
     intros.
-    assert (X:=H).
     eapply walk2_split in H; eauto.
-    destruct H as (wa, (wb, (R, [(?,?)|[(?,?)|(?,?)]]))); subst; inversion X; subst; clear X.
-    - simpl in *; clear H0.
-      destruct wb. {
-        left.
-        eauto using ends_with_eq.
+    destruct H as (wa,(wb,(?,X))).
+    destruct X as [(?,?)|[(?,?)|(?,?)]]; subst.
+    - contradiction H1; trivial.
+    - contradiction H2; trivial.
+    - eauto.
+  Qed.
+
+  Let ends_with_app_fst:
+    forall {A:Type} E w1 e a (b:A) w2,
+    Walk E ((e :: w1) ++ (a, b) :: w2) ->
+    EndsWith (e :: w1) a.
+  Proof.
+    induction w1; intros; destruct e as (x,y); simpl in *. {
+      inversion H; subst.
+      apply linked_inv in H4.
+      subst.
+      auto using ends_with_edge.
+    }
+    inversion H; subst.
+    eauto using ends_with_cons.
+  Qed.
+
+  Let walk2_inv_app_snd:
+    forall {A:Type} E w1 x (y:A) w2 a b,
+    Walk2 E x y (w1 ++ (a, b) :: w2) ->
+    Walk2 E a y ((a,b)::w2).
+  Proof.
+    induction w1; intros; simpl in *.
+    - assert (X:=H).
+      apply walk2_inv_eq_fst in X.
+      subst.
+      auto.
+    - destruct w1. {
+        simpl in *.
+        apply walk2_inv in H.
+        destruct H as (?,(?,(?,?))).
+        subst.
+        assert (X:=H1).
+        apply walk2_inv_eq_fst in X.
+        subst.
+        auto.
+      }
+      simpl in *.
+      apply walk2_inv in H.
+      destruct H as (?,(?,(?,?))).
+      subst.
+      eauto.
+  Qed.
+
+  Let walk2_split_neq_neq:
+    forall {A:Type} (eq_dec: forall (x y:A), {x = y} + {x <> y}) E w (x:A) y a b,
+    Walk2 E x y w ->
+    List.In (a,b) w ->
+    x <> a ->
+    y <> b ->
+    (exists wa, Walk2 E x a wa /\ ~ List.In (a,b) wa) /\
+    (exists wb, Walk2 E b y wb /\ ~ List.In (a,b) wb).
+  Proof.
+    intros.
+    inversion H; subst.
+    split.
+    - apply walk_split_fst with (e:=(a,b)) in H5; auto.
+      destruct H5 as (w1,(w2,(R,ni))).
+      subst.
+      destruct w1. {
+        simpl in *.
+        apply starts_with_eq in H3.
+        contradiction H1; auto.
+      }
+      exists (p::w1).
+      split; auto.
+      apply walk2_def.
+      + eauto using starts_with_app.
+      + inversion H; eauto using ends_with_app_fst.
+      + inversion H; subst.
+        apply walk_split in H7.
+        destruct H7 as [?|(?,(?,?))]. {
+          inversion H7.
+        }
+        auto.
+    - apply walk_split_snd with (e:=(a,b)) in H5; auto.
+      destruct H5 as (w1,(w2,(R,ni))).
+      subst.
+      exists w2.
+      split; auto.
+      apply walk2_inv_app_snd in H.
+      destruct w2. {
+        apply ends_with_inv_append in H4.
+        contradiction H2; auto.
+      }
+      apply walk2_inv in H.
+      destruct H as (?,(R,(?,?))).
+      inversion R; subst; clear R.
+      auto.
+  Qed.
+
+  Lemma walk2_split_not_in:
+    forall {A:Type} (eq_dec: forall (x y:A), {x = y} + {x <> y}) E w (x:A) y a b,
+    Walk2 E x y w ->
+    List.In (a,b) w ->
+    (a = x /\ b = y) \/
+    (a = x /\ exists wb, Walk2 E b y wb /\ ~ List.In (a,b) wb) \/
+    (b = y /\ exists wa, Walk2 E x a wa /\ ~ List.In (a,b) wa) \/
+    (
+      (exists wa, Walk2 E x a wa /\ ~ List.In (a,b) wa) /\
+      (exists wb, Walk2 E b y wb /\ ~ List.In (a,b) wb)
+    ).
+  Proof.
+    intros.
+    inversion H; subst.
+    destruct (eq_dec a x), (eq_dec b y); subst.
+    - auto.
+    - apply walk_split_snd with (e:=(x,b)) in H3; auto.
+      destruct H3 as (w1,(w2,(?,Hni))); subst.
+      destruct w2. {
+        apply ends_with_inv_append in H2.
+        subst.
+        auto.
       }
       right; left.
-      inversion H2; subst.
-      destruct p as (b',c).
-      assert (b' = b) by auto using linked_eq; subst.
-      eauto using walk2_def, starts_with_def, reaches_def, ends_with_inv.
-    - destruct wa. {
+      split; auto.
+      exists (p::w2).
+      split; auto.
+      apply walk2_inv_app_snd in H.
+      apply walk2_inv in H.
+      destruct H as (?,(R,(?,?))).
+      inversion R; subst.
+      auto.
+    - apply walk_split_fst with (e:=(a,y)) in H3; auto.
+      destruct H3 as (w1,(w2,(?,Hni))); subst.
+      destruct w1. {
         simpl in *.
-        eauto using starts_with_eq.
+        apply starts_with_eq in H1; subst.
+        contradiction n; auto.
       }
-      right; right; left; intuition.
-      apply walk_split in H2.
-      destruct H2 as [?|(?,(?,?))]. {
-        inversion H2.
-      }
-      destruct p as (x', v).
-      assert (x' = x) by eauto using starts_with_eq; subst.
-      eauto using reaches_def, walk2_def, starts_with_def.
-    - right; right; right.
-      eauto using reaches_def, walk2_def.
+      right; right; left.
+      split; auto.
+      exists (p::w1).
+      split; auto.
+      apply walk2_def.
+      + eauto using starts_with_app.
+      + inversion H; eauto using ends_with_app_fst.
+      + inversion H; subst.
+        apply walk_split in H5.
+        destruct H5 as [?|(?,(?,?))]. {
+          inversion H5.
+        }
+        auto.
+    - eauto using walk2_split_neq_neq.
   Qed.
 
 End Walk2.

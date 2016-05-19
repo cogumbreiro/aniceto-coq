@@ -43,6 +43,173 @@ End Defs.
 
 Require Import Aniceto.Graphs.FGraph.
 
+Section RmEdge.
+  Require Import Aniceto.Pair.
+  Require Import Aniceto.List.
+
+  Variable A:Type.
+  Variable eq_dec: forall (x y:A), {x = y} + {x <> y}.
+
+  Definition edge_eq_dec := pair_eq_dec eq_dec.
+
+  Definition rm_edge e es := remove edge_eq_dec e es.
+
+  Lemma rm_edge_in_neq:
+    forall e es e',
+    List.In e' es ->
+    e' <> e ->
+    List.In e' (rm_edge e es).
+  Proof.
+    intros.
+    unfold rm_edge.
+    auto using remove_in_neq.
+  Qed.
+
+  Lemma edge_rm_edge_to_edge:
+    forall e e' es,
+    Edge (rm_edge e es) e' ->
+    Edge es e'.
+  Proof.
+    unfold Edge in *; simpl in *.
+    unfold rm_edge in *.
+    eauto using remove_in.
+  Qed.
+
+End RmEdge.
+
+Module FDAG.
+
+Section Dag.
+  Variable A:Type.
+  Variable Lt: A * A -> Prop.
+
+  Definition DAG E := forall (x:A), ~ Reaches E x x.
+End Dag.
+
+Section FiniteDag.
+  Variable A:Type.
+
+  Variable eq_dec: forall (x y:A), {x = y} + {x <> y}.
+
+
+  (*MOVE TO FGRAPH*)
+  Let edge_inv_neq:
+    forall (e' e:A*A) es,
+    Edge (e' :: es) e ->
+    e' <> e ->
+    Edge es e.
+  Proof.
+    unfold Edge.
+    intros.
+    apply in_cons_neq in H; auto.
+  Qed.
+
+  Lemma walk_inv_not_in_walk:
+    forall w (e:A*A) es,
+    ~ List.In e w ->
+    Walk (Edge (e :: es)) w ->
+    Walk (Edge es) w.
+  Proof.
+    induction w; intros. {
+      auto using walk_nil.
+    }
+    inversion H0; subst; clear H0.
+    destruct H4. {
+      subst.
+      contradiction H; auto using in_eq.
+    }
+    assert (~ In e w) by intuition.
+    apply walk_cons; eauto.
+  Qed.
+
+  Lemma walk2_inv_not_in_walk:
+    forall e es (x:A) y w,
+    ~ List.In e w ->
+    Walk2 (Edge (e :: es)) x y w ->
+    Walk2 (Edge es) x y w.
+  Proof.
+    intros.
+    inversion H0; subst.
+    eauto using walk2_def, walk_inv_not_in_walk.
+  Qed.
+
+  Lemma walk_inv_in_edges:
+    forall w (e:A*A) es,
+    List.In e es ->
+    Walk (Edge (e :: es)) w ->
+    Walk (Edge es) w.
+  Proof.
+    induction w; intros. {
+      auto using walk_nil.
+    }
+    inversion H0; subst; clear H0.
+    apply IHw in H3; auto.
+    destruct H4; subst; auto using walk_cons.
+  Qed.
+
+  Lemma f_dag_cons:
+    forall es (x y:A),
+    DAG (Edge es) ->
+    ~ Reaches (Edge es) y x ->
+    x <> y ->
+    DAG (Edge ((x,y)::es)).
+  Proof.
+    intros.
+    unfold DAG in *.
+    intros z; unfold not; intros Hr.
+    inversion Hr as (w, Hw2).
+    inversion Hw2; subst.
+    destruct (in_dec (pair_eq_dec eq_dec) (x,y) w). {
+      apply walk2_split_not_in with (a:=x) (b:=y) in Hw2; auto.
+      destruct Hw2 as [(?,?)|[(?,(w',(Hw,?)))|[(?,(w',(Hw,?)))|((wa,(Hwa,?)),(wb,(Hwb,?)))]]]; subst.
+      - contradiction H1; auto.
+      - apply walk2_inv_not_in_walk in Hw; auto.
+        contradiction H0; eauto using reaches_def.
+      - apply walk2_inv_not_in_walk in Hw; auto.
+        contradiction H0; eauto using reaches_def.
+      - apply walk2_inv_not_in_walk in Hwa; auto.
+        apply walk2_inv_not_in_walk in Hwb; auto.
+        contradiction H0; eauto using reaches_def, reaches_trans.
+    }
+    assert (N: ~ Reaches (Edge es) z z) by auto.
+    contradiction N.
+    apply walk2_inv_not_in_walk in Hw2; eauto using reaches_def.
+  Qed.
+
+  Let edge_cons:
+    forall es (e:A*A) e',
+    Edge es e ->
+    Edge (e' :: es) e.
+  Proof.
+    unfold Edge in *.
+    auto using in_cons.
+  Qed.
+
+  Let reaches_inv_cons:
+    forall (x:A) y e es,
+    Reaches (Edge es) x y ->
+    Reaches (Edge (e :: es)) x y.
+  Proof.
+    eauto using reaches_impl.
+  Qed.
+
+  Lemma f_dag_inv_cons:
+    forall (e:A*A) es,
+    DAG (Edge (e :: es)) ->
+    DAG (Edge es).
+  Proof.
+    intros.
+    unfold DAG in *.
+    intros.
+    assert (Y:=H x).
+    unfold not; intros.
+    contradiction Y; clear Y.
+    auto.
+  Qed.
+End FiniteDag.
+
+End FDAG.
+
 Section Finite.
   Variable A:Type.
 
@@ -386,8 +553,6 @@ Section Props.
 
   Require Import Aniceto.Pair.
 
-  Let edge_eq_dec := pair_eq_dec eq_dec.
-
   Let find_outgoing x (es:list(A*A)) :=
   find (fst_eq x) es.
 
@@ -427,23 +592,10 @@ Section Props.
       contradiction H0; trivial.
   Qed.
 
-  Let rm_edge e es := remove edge_eq_dec e es.
-
-  Let rm_edge_in_neq:
-    forall e es e',
-    In e' es ->
-    e' <> e ->
-    In e' (rm_edge e es).
-  Proof.
-    intros.
-    unfold rm_edge.
-    auto using remove_in_neq.
-  Qed.
-
   Let find_outgoing_some_lt:
     forall x es e,
     find_outgoing x es = Some e ->
-    length (rm_edge e es) < length es.
+    length (rm_edge eq_dec e es) < length es.
   Proof.
     intros.
     unfold find_outgoing in *.
@@ -455,7 +607,7 @@ Section Props.
 
   Function find_path x es { measure length es } : list (A*A)  :=
   match find_outgoing x es with
-  | Some (x',y) => (x',y) :: find_path y (rm_edge (x',y) es)
+  | Some (x',y) => (x',y) :: find_path y (rm_edge eq_dec (x',y) es)
   | None => nil
   end.
   Proof.
@@ -572,11 +724,11 @@ Section Props.
       apply find_outgoing_some in Heqo; destruct Heqo.
       rewrite H0 in *; clear H0.
       clear H1.
-      assert (incl w (rm_edge (x,v2) es)) by eauto.
+      assert (incl w (rm_edge eq_dec (x,v2) es)) by eauto.
       rewrite H2.
       apply incl_cons; auto.
       unfold rm_edge in *.
-      assert (incl (remove edge_eq_dec (x, v2) es) es) by eauto using remove_incl.
+      assert (incl (remove (edge_eq_dec eq_dec) (x, v2) es) es) by eauto using remove_incl.
       eauto using incl_tran.
     - inversion H.
   Qed.
@@ -622,7 +774,7 @@ Section Props.
     forall E es,
     DAG E es ->
     forall e,
-    DAG E (rm_edge e es).
+    DAG E (rm_edge eq_dec e es).
   Proof.
     intros.
     unfold DAG in *.
@@ -656,7 +808,7 @@ Section Props.
         destruct (pair_eq_dec eq_dec (e1,e2) (z,z)); auto.
         right.
         simpl.
-        apply rm_edge_in_neq with (e:=(z,z)) in H; auto.
+        apply rm_edge_in_neq with (eq_dec:=eq_dec) (e:=(z,z)) in H; auto.
         unfold not; intros.
         subst.
         apply X in H.
@@ -669,7 +821,7 @@ Section Props.
       + inversion e; subst; clear e.
         unfold not; intros; subst.
         contradiction n; trivial.
-      + apply find_path_nil with (y:=e1) (z:=e2) in H5; auto.
+      + eauto using find_path_nil, rm_edge_in_neq.
     - inversion H.
   Qed.
 
@@ -692,16 +844,6 @@ Section Props.
     rewrite Forall_forall in H.
     apply H in Y.
     auto.
-  Qed.
-
-  Let edge_rm_edge_to_edge:
-    forall e e' es,
-    Edge (rm_edge e es) e' ->
-    Edge es e'.
-  Proof.
-    unfold Edge in *; simpl in *.
-    unfold rm_edge in *.
-    eauto using remove_in.
   Qed.
 
   Let dag_lt_to_nrefl:
