@@ -91,6 +91,15 @@ Section FiniteDag.
 
   Variable eq_dec: forall (x y:A), {x = y} + {x <> y}.
 
+  Lemma f_dag_nil:
+    DAG (Edge (@nil (A*A))).
+  Proof.
+    intros.
+    unfold DAG, not; intros.
+    apply reaches_to_in_fst in H.
+    destruct H as ((y,z),(?,Hp)).
+    inversion H.
+  Qed.
 
   (*MOVE TO FGRAPH*)
   Let edge_inv_neq:
@@ -175,6 +184,43 @@ Section FiniteDag.
     contradiction N.
     apply walk2_inv_not_in_walk in Hw2; eauto using reaches_def.
   Qed.
+
+  Lemma f_dag_cons_reaches:
+    forall es (x y:A),
+    DAG (Edge es) ->
+    Reaches (Edge es) x y ->
+    DAG (Edge ((x,y)::es)).
+  Proof.
+    intros.
+    unfold DAG.
+    intros z; unfold not; intros R.
+    inversion R as (w, Hw).
+    destruct (in_dec (pair_eq_dec eq_dec) (x,y) w). {
+      apply walk2_split_not_in with (a:=x) (b:=y) in Hw; auto.
+      destruct Hw as [(?,?)|[(?,(w',(Hw,?)))|[(?,(w',(Hw,?)))|((wa,(Hwa,?)),(wb,(Hwb,?)))]]]; subst.
+      - apply H in H0; auto.
+      - apply walk2_inv_not_in_walk in Hw; auto.
+        assert (n: Reaches (Edge es) z z). {
+          eauto using reaches_trans, reaches_def.
+        }
+        apply H in n; auto.
+      - apply walk2_inv_not_in_walk in Hw; auto.
+        assert (n: Reaches (Edge es) x x). {
+          eauto using reaches_trans, reaches_def.
+        }
+        apply H in n; auto.
+      - apply walk2_inv_not_in_walk in Hwa; auto.
+        apply walk2_inv_not_in_walk in Hwb; auto.
+        assert (n: Reaches (Edge es) x x). {
+          eauto using reaches_trans, reaches_def.
+        }
+        apply H in n; auto.
+    }
+    assert (N: ~ Reaches (Edge es) z z) by auto.
+    contradiction N.
+    apply walk2_inv_not_in_walk in Hw; eauto using reaches_def.
+  Qed.
+  
 
   Let edge_cons:
     forall es (e:A*A) e',

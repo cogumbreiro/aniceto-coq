@@ -1743,18 +1743,17 @@ Section Walk2.
     forall {A:Type} E w (x:A) y a b,
     Walk2 E x y w ->
     List.In (a,b) w ->
-    exists wa wb, w = wa ++ (a,b) :: wb /\ (
-      (wa = nil /\ a = x) \/
-      (wb = nil /\ b = y) \/
-      (Walk2 E x a wa /\ Walk2 E b y wb)
+    (a = x) \/
+    (b = y) \/
+    (exists wa wb,
+      w = wa ++ (a,b) :: wb /\ (Walk2 E x a wa /\ Walk2 E b y wb)
     ).
   Proof.
     intros.
     inversion H; subst.
     assert (X:= H0); apply in_split in X.
     destruct X as (wa,(wb,R)).
-    exists wa; exists wb.
-    subst; split; auto.
+    subst.
     destruct wa. {
       left.
       simpl in *.
@@ -1768,6 +1767,7 @@ Section Walk2.
       auto.
     }
     right.
+    exists (p::wa); exists (p0::wb); split; auto.
     assert (X:=H3).
     apply walk_split in X.
     destruct X as [X|(?,(?,?))]. {
@@ -1792,10 +1792,9 @@ Section Walk2.
   Proof.
     intros.
     eapply walk2_split in H; eauto.
-    destruct H as (wa,(wb,(?,X))).
-    destruct X as [(?,?)|[(?,?)|(?,?)]]; subst.
-    - contradiction H1; trivial.
-    - contradiction H2; trivial.
+    destruct H as [?|[?|(wa,(wb,(?,X)))]].
+    - contradiction H1; auto.
+    - contradiction H2; auto.
     - eauto.
   Qed.
 
@@ -1943,6 +1942,59 @@ Section Walk2.
     - eauto using walk2_split_neq_neq.
   Qed.
 
+
+  Lemma walk2_split_app:
+    forall {A:Type} E w1 x (y:A) e w2 a b,
+    Walk2 E x y ((e :: w1) ++ (a, b) :: w2) ->
+    Walk2 E x a ((e :: w1)) /\ Walk2 E a y ((a, b) :: w2).
+  Proof.
+    induction w1; intros. {
+      simpl in *.
+      destruct e as (v1,v).
+      inversion H; subst.
+      apply starts_with_eq in H0; subst.
+      inversion H2; subst.
+      apply linked_inv in H6; subst.
+      split.
+      - apply walk2_def; auto using starts_with_def, ends_with_edge, edge_to_walk.
+      - apply walk2_def; eauto using starts_with_def, ends_with_inv.
+    }
+    simpl in *.
+    apply walk2_inv in H.
+    destruct H as (v2, (?,(?,?))); subst.
+    apply IHw1 in H1.
+    destruct H1; split; auto using walk2_cons.
+  Qed.
+
+  Lemma walk2_to_in_fst:
+    forall {A:Type} E x (y:A) w,
+    Walk2 E x y w ->
+    In E x.
+  Proof.
+    intros.
+    destruct H.
+    inversion H.
+    destruct x as (x,y).
+    destruct H2 as (?,(?,?)).
+    simpl in *.
+    subst.
+    assert (List.In (v1,y) ((v1,y) :: x0)) by auto using in_eq.
+    assert (E (v1,y)) by (eapply walk_to_edge; eauto).
+    eauto using in_left.
+  Qed.
+
+  Lemma walk2_to_in_snd:
+    forall {A:Type} E x (y:A) w,
+    Walk2 E x y w ->
+    In E y.
+  Proof.
+    intros.
+    inversion H; subst; clear H.
+    destruct H1 as ((v1,v2),(?,?)); simpl in *;subst.
+    assert (E (v1,y)) by (eapply walk_to_edge; eauto using end_in).
+    eauto using in_right.
+  Qed.
+
 End Walk2.
 
 Section In.
@@ -1978,6 +2030,27 @@ Section Reaches.
     intros.
     eauto using reaches_def, edge_to_walk2.
   Qed.
+
+  Lemma reaches_to_in_fst:
+    forall {A:Type} E x (y:A),
+    Reaches E x y ->
+    In E x.
+  Proof.
+    intros.
+    inversion H.
+    eauto using walk2_to_in_fst.
+  Qed.
+
+  Lemma reaches_to_in_snd:
+    forall {A:Type} E x (y:A),
+    Reaches E x y ->
+    In E y.
+  Proof.
+    intros.
+    inversion H.
+    eauto using walk2_to_in_snd.
+  Qed.
+
 
 End Reaches.
 
