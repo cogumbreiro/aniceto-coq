@@ -1583,12 +1583,15 @@ Section FindNotIn.
     forall x,
     Lt x (next x).
 
+  Definition Supremum x := Forall (fun y : A => Lt y x).
+
   Let supremum_replace:
     forall l x z,
-    Forall (fun y : A => Lt y x) l ->
+    Supremum x l ->
     Lt x z ->
-    Forall (fun y : A => Lt y z) l.
+    Supremum z l.
   Proof.
+    unfold Supremum.
     intros.
     induction l. {
       auto using Forall_nil.
@@ -1597,33 +1600,63 @@ Section FindNotIn.
     eauto using Forall_cons.
   Qed.
 
+  Let supremum_nil:
+    forall x,
+    Supremum x nil.
+  Proof.
+    unfold Supremum; auto.
+  Qed.
+
   Let supremum_cons:
+    forall x y l,
+    Supremum x l ->
+    Lt y x ->
+    Supremum x (y :: l).
+  Proof.
+    unfold Supremum; auto using Forall_cons.
+  Qed.
+
+  Let supremum_cons_any:
     forall x l,
-    Forall (fun y => Lt y x) l ->
-    forall z, exists w, Forall (fun y => Lt y w) (z :: l).
+    Supremum x l ->
+    forall z, exists w, Supremum w (z :: l).
   Proof.
     intros.
-    destruct (lt_comparable x z).
-    - eauto using supremum_replace.
-    - subst; eauto using Forall_cons.
-    - eauto using Forall_cons.
+    destruct (lt_comparable x z); subst; eauto.
   Qed.
 
-  Let find_supremum:
+  Fixpoint supremum l :=
+  match l with
+  | nil => zero
+  | z :: l =>
+    match lt_comparable (supremum l) z with
+    | LT _ => next z
+    | EQ _ => next (supremum l)
+    | GT _ => supremum l
+    end
+  end.
+
+  Lemma supremum_spec:
     forall l,
-    exists x, Forall (fun y => Lt y x) l.
+    Supremum (supremum l) l.
   Proof.
     induction l; intros. {
-      exists zero.
-      apply Forall_nil.
+      apply supremum_nil.
     }
-    destruct IHl.
-    eauto.
+    simpl.
+    destruct (lt_comparable (supremum l) a).
+    - assert (Supremum a l) by eauto.
+      assert (Supremum (next a) l) by eauto.
+      auto using supremum_cons.
+    - subst.
+      assert (Supremum (next (supremum l)) l) by eauto.
+      auto.
+    - auto.
   Qed.
 
-  Let supremum_not_in:
+  Lemma supremum_not_in:
     forall x l,
-    Forall (fun y => Lt y x) l ->
+    Supremum x l ->
     ~ List.In x l.
   Proof.
     intros.
@@ -1640,11 +1673,10 @@ Section FindNotIn.
 
   Theorem find_not_in:
     forall l,
-    exists (x:A), ~ List.In x l.
+    ~ List.In (supremum l) l.
   Proof.
     intros.
-    destruct (find_supremum l) as (x, H).
-    eauto.
+    auto using supremum_spec, supremum_not_in.
   Qed.
 
 End FindNotIn.

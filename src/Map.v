@@ -961,22 +961,48 @@ Section NotIn.
     forall k k',
     E.eq k k' -> k = k'.
 
-  Theorem find_not_in:
-    forall (m: t elt),
-    exists (x:key), ~ In x m.
+  Definition supremum (m:t elt) := (List.supremum zero next lt_comparable (keys m)).
+
+  Definition Supremum x (m:t elt) := forall y, In y m -> Lt y x.
+
+  Lemma supremum_spec:
+    forall (m:t elt),
+    Supremum (supremum m) m.
   Proof.
     intros.
-    destruct (List.find_not_in zero next lt_trans lt_irrefl lt_comparable lt_next (keys m)) as (x, X).
-    exists x.
-    unfold not; intros.
-    contradiction X.
+    assert (X:=List.supremum_spec zero next lt_trans lt_comparable lt_next (keys m)).
+    unfold List.Supremum in *.
+    rewrite Forall_forall in X.
+    unfold Supremum.
+    intros.
     apply keys_spec_2 in H.
-    destruct H as (k', (e, i)).
-    apply eq_rw in e.
-    subst.
+    destruct H as (k', (E,Hi)).
+    apply eq_rw in E; subst.
+    auto.
+  Qed.
+
+  Lemma supremum_not_in:
+    forall x m,
+    Supremum x m ->
+    ~ In x m.
+  Proof.
+    intros.
+    unfold not; intros.
+    apply H in H0.
+    apply lt_irrefl in H0.
+    contradiction.
+  Qed.
+
+  Theorem find_not_in:
+    forall m,
+    ~ In (supremum m) m.
+  Proof.
+    intros.
+    assert (S: Supremum (supremum m) m) by auto using supremum_spec.
+    apply supremum_not_in in S.
     assumption.
   Qed.
-  
+
 End NotIn.
 
 End MapUtil.
