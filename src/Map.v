@@ -932,4 +932,51 @@ Section Partition.
   Qed.
 End Partition.
 
+Section NotIn.
+  Require Import Coq.Structures.OrderedType.
+  Variable elt:Type.
+  Variable zero: E.t.
+  Variable next: E.t -> E.t.
+  Variable Lt: E.t -> E.t -> Prop.
+  Variable lt_trans:
+    forall x y z,
+    Lt x y ->
+    Lt y z ->
+    Lt x z.
+  Variable lt_irrefl:
+    forall x,
+    ~ Lt x x.
+
+  Variable lt_comparable:
+    forall x y, Compare Lt eq x y.
+
+  Variable lt_zero:
+    forall x, ~ Lt x zero.
+
+  Variable lt_next:
+    forall x,
+    Lt x (next x).
+
+  Variable eq_rw:
+    forall k k',
+    E.eq k k' -> k = k'.
+
+  Theorem find_not_in:
+    forall (m: t elt),
+    exists (x:key), ~ In x m.
+  Proof.
+    intros.
+    destruct (List.find_not_in zero next lt_trans lt_irrefl lt_comparable lt_next (keys m)) as (x, X).
+    exists x.
+    unfold not; intros.
+    contradiction X.
+    apply keys_spec_2 in H.
+    destruct H as (k', (e, i)).
+    apply eq_rw in e.
+    subst.
+    assumption.
+  Qed.
+  
+End NotIn.
+
 End MapUtil.

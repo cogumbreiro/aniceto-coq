@@ -1556,3 +1556,95 @@ Section Flip.
 
 End Flip.
 
+Section FindNotIn.
+  Require Import Coq.Structures.OrderedType.
+
+  Variable A:Type.
+
+  Variable zero: A.
+  Variable next: A -> A.
+  Variable Lt : A -> A -> Prop.
+  Variable lt_trans:
+    forall x y z,
+    Lt x y ->
+    Lt y z ->
+    Lt x z.
+  Variable lt_irrefl:
+    forall x,
+    ~ Lt x x.
+
+  Variable lt_comparable:
+    forall x y, Compare Lt eq x y.
+
+  Variable zero_is_smallest:
+    forall x, ~ Lt x zero.
+
+  Variable lt_next:
+    forall x,
+    Lt x (next x).
+
+  Let supremum_replace:
+    forall l x z,
+    Forall (fun y : A => Lt y x) l ->
+    Lt x z ->
+    Forall (fun y : A => Lt y z) l.
+  Proof.
+    intros.
+    induction l. {
+      auto using Forall_nil.
+    }
+    inversion H.
+    eauto using Forall_cons.
+  Qed.
+
+  Let supremum_cons:
+    forall x l,
+    Forall (fun y => Lt y x) l ->
+    forall z, exists w, Forall (fun y => Lt y w) (z :: l).
+  Proof.
+    intros.
+    destruct (lt_comparable x z).
+    - eauto using supremum_replace.
+    - subst; eauto using Forall_cons.
+    - eauto using Forall_cons.
+  Qed.
+
+  Let find_supremum:
+    forall l,
+    exists x, Forall (fun y => Lt y x) l.
+  Proof.
+    induction l; intros. {
+      exists zero.
+      apply Forall_nil.
+    }
+    destruct IHl.
+    eauto.
+  Qed.
+
+  Let supremum_not_in:
+    forall x l,
+    Forall (fun y => Lt y x) l ->
+    ~ List.In x l.
+  Proof.
+    intros.
+    unfold not; intros.
+    induction l. {
+      inversion H0.
+    }
+    destruct H0.
+    - subst.
+      inversion H; clear H.
+      apply lt_irrefl in H2; auto.
+    - inversion H; auto.
+  Qed.
+
+  Theorem find_not_in:
+    forall l,
+    exists (x:A), ~ List.In x l.
+  Proof.
+    intros.
+    destruct (find_supremum l) as (x, H).
+    eauto.
+  Qed.
+
+End FindNotIn.
