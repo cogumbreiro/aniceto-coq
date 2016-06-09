@@ -1200,3 +1200,126 @@ Section Edge.
     apply in_impl with (E:=Edge es); auto.
   Qed.
 End Edge.
+
+Section Restriction.
+  Variable A:Type.
+  Variable eq_dec:
+    forall (x y:A), { x = y } + { x <> y }.
+
+  Let vertex_mem (vs:list A) (x:A) := ListSet.set_mem eq_dec x vs.
+
+  Let edge_mem vs (e:A*A) := let (x,y) := e in andb (vertex_mem vs x) (vertex_mem vs y).
+
+  Definition edge_eq_dec := Pair.pair_eq_dec eq_dec.
+
+  Definition restriction vs es := filter (edge_mem vs) es.
+
+  Lemma restriction_incl:
+    forall vs es,
+    incl (restriction vs es) es.
+  Proof.
+    intros.
+    unfold restriction.
+    auto using List.filter_incl.
+  Qed.
+
+  Let vertex_mem_true_to_prop:
+    forall x l,
+    vertex_mem l x = true ->
+    List.In x l.
+  Proof.
+    unfold vertex_mem.
+    intros.
+    apply ListSet.set_mem_correct1 in H.
+    auto.
+  Qed.
+
+  Let vertex_mem_false_to_prop:
+    forall x l,
+    vertex_mem l x = false ->
+    ~ List.In x l.
+  Proof.
+    unfold vertex_mem.
+    intros.
+    apply ListSet.set_mem_complete1 in H.
+    auto.
+  Qed.
+
+  Let edge_mem_true_to_prop:
+    forall rs x1 x2,
+    edge_mem rs (x1, x2) = true ->
+    List.In x1 rs /\ List.In x2 rs.
+  Proof.
+    unfold edge_mem.
+    intros.
+    remember (vertex_mem _ x1) as b1.
+    remember (vertex_mem _ x2) as b2.
+    symmetry in Heqb1; symmetry in Heqb2.
+    destruct b1, b2; subst; try inversion H.
+    auto using vertex_mem_true_to_prop.
+  Qed.
+
+  Let edge_mem_false_to_prop:
+    forall rs x1 x2,
+    edge_mem rs (x1, x2) = false ->
+    ~ List.In x1 rs \/ ~ List.In x2 rs.
+  Proof.
+    unfold edge_mem.
+    intros.
+    rewrite Bool.andb_false_iff in H.
+    destruct H;
+    eauto using vertex_mem_false_to_prop.
+  Qed.
+
+  Let edge_mem_true_from_prop:
+    forall rs x1 x2,
+    List.In x1 rs ->
+    List.In x2 rs ->
+    edge_mem rs (x1, x2) = true.
+  Proof.
+    intros.
+    remember (edge_mem _ _).
+    symmetry in Heqb.
+    destruct b; auto.
+    apply edge_mem_false_to_prop in Heqb.
+    destruct Heqb; contradiction.
+  Qed.
+
+  Let restriction_inv_edge:
+    forall x1 x2 rs es,
+    List.In (x1, x2) (restriction rs es) ->
+    List.In x1 rs /\ List.In x2 rs.
+  Proof.
+    unfold restriction.
+    intros.
+    apply filter_In in H.
+    destruct H.
+    auto.
+  Qed.
+
+  Lemma restriction_in_1:
+    forall rs es x,
+    Graph.In (Edge (restriction rs es)) x ->
+    List.In x rs.
+  Proof.
+    unfold Edge.
+    intros.
+    destruct H as ((x1,x2),(He,inP)).
+    apply restriction_inv_edge in He.
+    destruct He.
+    destruct inP; simpl in *; subst; auto.
+  Qed.
+
+  Lemma restriction_in_2:
+    forall x1 x2 rs es,
+    List.In (x1, x2) es ->
+    List.In x1 rs ->
+    List.In x2 rs ->
+    List.In (x1, x2) (restriction rs es).
+  Proof.
+    unfold restriction.
+    intros.
+    apply List.filter_true_to_in; auto.
+  Qed.
+
+End Restriction.
