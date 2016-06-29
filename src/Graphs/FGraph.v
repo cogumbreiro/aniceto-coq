@@ -279,7 +279,7 @@ Proof.
   eauto using has_incoming_def.
 Qed.
 
-Let edge_eq_dec := pair_eq_dec eq_dec.
+Definition edge_eq_dec := pair_eq_dec eq_dec.
 
 Definition rm_sources (g:fgraph) :=
   feedback_filter edge_eq_dec (fun g' e => has_incoming g' (fst e)) g.
@@ -1210,8 +1210,6 @@ Section Restriction.
 
   Let edge_mem vs (e:A*A) := let (x,y) := e in andb (vertex_mem vs x) (vertex_mem vs y).
 
-  Definition edge_eq_dec := Pair.pair_eq_dec eq_dec.
-
   Definition restriction vs es := filter (edge_mem vs) es.
 
   Lemma restriction_incl:
@@ -1323,3 +1321,112 @@ Section Restriction.
   Qed.
 
 End Restriction.
+
+
+Section ConsEdge.
+  Variable A:Type.
+
+  Let edge_inv_neq:
+    forall (e' e:A*A) es,
+    Edge (e' :: es) e ->
+    e' <> e ->
+    Edge es e.
+  Proof.
+    unfold Edge.
+    intros.
+    apply in_cons_neq in H; auto.
+  Qed.
+
+  Lemma walk_inv_not_in_walk:
+    forall w (e:A*A) es,
+    ~ List.In e w ->
+    Walk (Edge (e :: es)) w ->
+    Walk (Edge es) w.
+  Proof.
+    induction w; intros. {
+      auto using walk_nil.
+    }
+    inversion H0; subst; clear H0.
+    destruct H4. {
+      subst.
+      contradiction H; auto using in_eq.
+    }
+    assert (~ List.In e w) by intuition.
+    apply walk_cons; eauto.
+  Qed.
+
+  Lemma walk2_inv_not_in_walk:
+    forall e es (x:A) y w,
+    ~ List.In e w ->
+    Walk2 (Edge (e :: es)) x y w ->
+    Walk2 (Edge es) x y w.
+  Proof.
+    intros.
+    inversion H0; subst.
+    eauto using walk2_def, walk_inv_not_in_walk.
+  Qed.
+
+  Lemma walk_inv_in_edges:
+    forall w (e:A*A) es,
+    List.In e es ->
+    Walk (Edge (e :: es)) w ->
+    Walk (Edge es) w.
+  Proof.
+    induction w; intros. {
+      auto using walk_nil.
+    }
+    inversion H0; subst; clear H0.
+    apply IHw in H3; auto.
+    destruct H4; subst; auto using walk_cons.
+  Qed.
+
+  Lemma edge_cons:
+    forall es (e:A*A) e',
+    Edge es e ->
+    Edge (e' :: es) e.
+  Proof.
+    unfold Edge in *.
+    auto using in_cons.
+  Qed.
+
+  Lemma reaches_inv_cons:
+    forall (x:A) y e es,
+    Reaches (Edge es) x y ->
+    Reaches (Edge (e :: es)) x y.
+  Proof.
+    eauto using reaches_impl, edge_cons.
+  Qed.
+
+End ConsEdge.
+
+Section RmEdge.
+  Require Import Aniceto.Pair.
+  Require Import Aniceto.List.
+
+  Variable A:Type.
+  Variable eq_dec: forall (x y:A), {x = y} + {x <> y}.
+
+  Definition rm_edge e es := remove (edge_eq_dec eq_dec) e es.
+
+  Lemma rm_edge_in_neq:
+    forall e es e',
+    List.In e' es ->
+    e' <> e ->
+    List.In e' (rm_edge e es).
+  Proof.
+    intros.
+    unfold rm_edge.
+    auto using remove_in_neq.
+  Qed.
+
+  Lemma edge_rm_edge_to_edge:
+    forall e e' es,
+    Edge (rm_edge e es) e' ->
+    Edge es e'.
+  Proof.
+    unfold Edge in *; simpl in *.
+    unfold rm_edge in *.
+    eauto using remove_in.
+  Qed.
+
+End RmEdge.
