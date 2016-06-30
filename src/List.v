@@ -325,7 +325,19 @@ Proof.
     auto using Is_true_eq_left.
 Qed.
 
+  Lemma existsb_Exists:
+    forall {A:Type} f (l:list A),
+    existsb f l = true ->
+    Exists (fun x => f x = true) l.
+  Proof.
+    intros.
+    rewrite existsb_exists in *.
+    rewrite Exists_exists.
+    assumption.
+  Qed.
+
 End LISTS.
+
 
 Implicit Arguments filter_inv.
 
@@ -1680,3 +1692,97 @@ Section FindNotIn.
   Qed.
 
 End FindNotIn.
+
+Section Partition.
+
+  Lemma existsb_Forall:
+    forall {A:Type} l (f:A->bool),
+    existsb f l = false ->
+    Forall (fun x => f x = false) l.
+  Proof.
+    intros.
+    rewrite existsb_forallb in H.
+    apply Bool.negb_false_iff in H.
+    apply Forall_forallb in H.
+    rewrite Forall_forall in *.
+    intros.
+    apply H in H0.
+    apply Bool.Is_true_eq_true in H0.
+    apply Bool.negb_true_iff in H0.
+    assumption.
+  Qed.
+
+  (** Find a pivot according to a predicate [f] such that
+      the predicate is false for a portion of the list. *)
+      
+  Lemma partition_snd:
+    forall {A:Type} l f,
+    Exists (fun x => f x = true) l ->
+    (exists l1 l2 (x:A),
+    l = l1 ++ x :: l2 /\
+    f x = true /\
+    List.Forall (fun y => f y = false) l2).
+  Proof.
+    induction l as [|y]; intros. {
+      apply Exists_nil in H; contradiction.
+    }
+    inversion H; subst; clear H. {
+      remember (existsb f l);
+      symmetry in Heqb; destruct b. {
+        apply existsb_Exists in Heqb.
+        apply IHl in Heqb.
+        destruct Heqb as (l1, (l2, (x, (?,(Hx,Hy))))).
+        subst; clear IHl.
+        exists (y::l1).
+        exists l2.
+        exists x.
+        auto.
+      }
+      apply existsb_Forall in Heqb.
+      exists nil.
+      exists l.
+      exists y.
+      auto.
+    }
+    apply IHl in H1.
+    destruct H1 as (l1, (l2, (x, (?,(Hx,Hy))))).
+    subst; clear IHl.
+    exists (y::l1).
+    exists l2.
+    exists x.
+    auto.
+  Qed.
+
+  Lemma partition_fst:
+    forall {A:Type} l f,
+    Exists (fun x => f x = true) l ->
+    (exists l1 l2 (x:A),
+    l = l1 ++ x :: l2 /\
+    f x = true /\
+    List.Forall (fun y => f y = false) l1).
+  Proof.
+    induction l as [|y]; intros. {
+      apply Exists_nil in H; contradiction.
+    }
+    inversion H; subst; clear H. {
+      exists nil.
+      simpl.
+      eauto.
+    }
+    remember (f y).
+    symmetry in Heqb; destruct b. {
+      exists nil.
+      simpl.
+      eauto.
+    }
+    eapply IHl in H1; clear IHl.
+    destruct H1 as (l1,(l2,(x,(?,(Hx,Hy))))).
+    subst.
+    exists (y::l1).
+    simpl.
+    exists l2.
+    exists x.
+    repeat split; auto using Forall_cons.
+  Qed.
+
+End Partition.

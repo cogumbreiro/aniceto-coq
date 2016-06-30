@@ -1669,75 +1669,247 @@ Section Walk2.
       eauto using ends_with_inv.
   Qed.
 
+  Section SplitWalk.
+    Variable A:Type.
+    Variable eq_dec: forall (x y:A), {x = y} + {x <> y}.
+
+    (** The edge [e] is an outgoing edge of [x]. *)
+
+    Definition Outgoing (x:A) (e:A*A) := x = fst e.
+
+    Definition outgoing (x:A) (e:A*A) : bool :=
+    if eq_dec x (fst e) then true else false.
+
+    Definition Incoming (x:A) (e:A*A) := x = snd e.
+
+    Definition incoming (x:A) (e:A*A) : bool :=
+    if eq_dec x (snd e) then true else false.
+
+    (** A path [w] has at least one outgoing edge of [x]. *)
+
+    Definition HasOutgoing (x:A) (w:list (A*A)) := List.Exists (Outgoing x) w.
+
+    Definition has_outgoing x := existsb (outgoing x).
+
+    Definition HasIncoming (x:A) (w:list (A*A)) := List.Exists (Incoming x) w.
+
+    Definition has_incoming x := existsb (incoming x).
+
+    Let edge_eqb e x := if pair_eq_dec eq_dec e x then true else false.
+
+    Let edge_eqb_rw:
+      forall e,
+      edge_eqb e e = true.
+    Proof.
+      intros.
+      unfold edge_eqb.
+      destruct (pair_eq_dec eq_dec e e). {
+        trivial.
+      }
+      contradiction n; trivial.
+    Qed.
+
+    Let edge_eqb_true:
+      forall x y,
+      edge_eqb x y = true ->
+      x = y.
+    Proof.
+      intros.
+      unfold edge_eqb in *.
+      destruct (pair_eq_dec eq_dec x y). {
+        trivial.
+      }
+      inversion H.
+    Qed.
+
+    Let edge_eqb_false:
+      forall x y,
+      edge_eqb x y = false ->
+      x <> y.
+    Proof.
+      intros.
+      unfold edge_eqb in *.
+      destruct (pair_eq_dec eq_dec x y). {
+        inversion H.
+      }
+      trivial.
+    Qed.
+
+    Lemma walk_split_fst:
+      forall E w (e:A*A),
+      List.In e w ->
+      Walk E w ->
+      (exists w1 w2, w = w1 ++ e :: w2 /\ ~ List.In e w1).
+    Proof.
+      intros.
+      assert (He: Exists (fun x=> edge_eqb e x = true) w). {
+        rewrite Exists_exists.
+        eauto.
+     }
+     apply partition_fst in He.
+     destruct He as (w1, (w2, (x, (?,(Hx,Hy))))).
+     apply edge_eqb_true in Hx.
+     subst.
+     assert (~ List.In x w1). {
+       unfold not; intros.
+       rewrite Forall_forall in Hy.
+       apply Hy in H1.
+       apply edge_eqb_false in H1; contradiction H1; trivial.
+     }
+     eauto.
+   Qed.
+
   Lemma walk_split_snd:
-    forall {A:Type} (eq_dec: forall (x y:A), {x = y} + {x <> y}) E w (e:A*A),
+    forall E w (e:A*A),
     List.In e w ->
     Walk E w ->
     (exists w1 w2, w = w1 ++ e :: w2 /\ ~ List.In e w2).
   Proof.
-    induction w as [|e']; intros. {
-      inversion H.
-    }
-    inversion H0; subst.
-    destruct H. {
-      subst.
-      destruct (in_dec (pair_eq_dec eq_dec) e w). {
-        apply IHw in i; auto.
-        destruct i as (l1,(l2,(X,?))).
-        subst.
-        exists (e::l1).
-        exists l2.
-        auto.
-      }
-      exists nil.
-      simpl.
-      exists w.
-      auto.
-    }
-    eapply IHw in H3; eauto.
-    destruct H3 as (l1,(l2,(?,?))).
-    subst.
-    exists (e'::l1).
-    exists l2.
-    auto.
+      intros.
+      assert (He: Exists (fun x=> edge_eqb e x = true) w). {
+        rewrite Exists_exists.
+        eauto.
+     }
+     apply partition_snd in He.
+     destruct He as (w1, (w2, (x, (?,(Hx,Hy))))).
+     apply edge_eqb_true in Hx.
+     subst.
+     assert (~ List.In x w2). {
+       unfold not; intros.
+       rewrite Forall_forall in Hy.
+       apply Hy in H1.
+       apply edge_eqb_false in H1; contradiction H1; trivial.
+     }
+     eauto.
   Qed.
 
-  Lemma walk_split_fst:
-    forall {A:Type} (eq_dec: forall (x y:A), {x = y} + {x <> y}) E w (e:A*A),
-    List.In e w ->
-    Walk E w ->
-    (exists w1 w2, w = w1 ++ e :: w2 /\ ~ List.In e w1).
+  Let outgoing_to_true:
+    forall x e,
+    Outgoing x e ->
+    outgoing x e = true.
   Proof.
-    induction w as [|e']; intros. {
-      inversion H.
+    intros.
+    unfold outgoing, Outgoing in *.
+    destruct (eq_dec x (fst e)). {
+      trivial.
     }
-    inversion H0; subst.
-    destruct H. {
-      subst.
-      exists nil.
-      simpl.
-      exists w.
-      intuition.
-    }
-    eapply IHw in H3; eauto.
-    destruct H3 as (l1,(l2,(?,?))).
     subst.
-    destruct (pair_eq_dec eq_dec e e'). {
-      subst.
-      exists nil.
-      simpl.
-      exists (l1 ++ e' :: l2 ).
-      intuition.
-    }
-    exists (e'::l1).
-    exists l2.
-    simpl.
-    split; auto.
-    unfold not; intros.
-    destruct H1.
-    - contradiction n; auto.
-    - contradiction.
+    contradiction n; trivial.
   Qed.
+
+  Let outgoing_true_rw:
+    forall x y z,
+    outgoing x (y, z) = true ->
+    y = x.
+  Proof.
+    intros.
+    unfold outgoing in *.
+    simpl in *.
+    destruct (eq_dec x y). {
+      auto.
+    }
+    inversion H.
+  Qed.
+
+    Lemma walk_split_outgoing_snd:
+      forall E w (x:A),
+      HasOutgoing x w ->
+      Walk E w ->
+      (exists w1 w2 y, w = w1 ++ (x,y) :: w2 /\ ~ HasOutgoing x w2).
+    Proof.
+      intros.
+      unfold HasOutgoing in *.
+      assert (He: Exists (fun e=> outgoing x e = true) w). {
+        rewrite Exists_exists in *.
+        destruct H as (e, (Hw, Ho)).
+        exists e; split; auto.
+      }
+      clear H.
+      apply partition_snd in He.
+      destruct He as (w1, (w2, (e, (?,(Hx,Hy))))).
+      subst.
+      destruct e as (x', y).
+      apply outgoing_true_rw in Hx.
+      subst.
+      exists w1.
+      exists w2.
+      exists y.
+      split; auto.
+      unfold not; intros Hx.
+      rewrite Forall_forall in Hy.
+      rewrite Exists_exists in *.
+      destruct Hx as (e, (Hi, Ho)).
+      apply Hy in Hi.
+      apply outgoing_to_true in Ho.
+      rewrite Hi in *.
+      inversion Ho.
+    Qed.
+
+
+  Let incoming_to_true:
+    forall x e,
+    Incoming x e ->
+    incoming x e = true.
+  Proof.
+    intros.
+    intros.
+    unfold incoming, Incoming in *.
+    destruct (eq_dec x (snd e)). {
+      trivial.
+    }
+    subst.
+    contradiction n; trivial.
+  Qed.
+
+  Let incoming_true_rw:
+    forall x y z,
+    incoming x (y, z) = true ->
+    z = x.
+  Proof.
+    intros.
+    unfold incoming in *.
+    simpl in *.
+    destruct (eq_dec x z). {
+      auto.
+    }
+    inversion H.
+  Qed.
+
+    Lemma walk_split_incoming_fst:
+      forall E w (x:A),
+      HasIncoming x w ->
+      Walk E w ->
+      (exists w1 w2 y, w = w1 ++ (y,x) :: w2 /\ ~ HasIncoming x w1).
+    Proof.
+      intros.
+      unfold HasIncoming in *.
+      assert (He: Exists (fun e=> incoming x e = true) w). {
+        rewrite Exists_exists in *.
+        destruct H as (e, (Hw, Ho)).
+        exists e; split; auto.
+      }
+      clear H.
+      apply partition_fst in He.
+      destruct He as (w1, (w2, (e, (?,(Hx,Hy))))).
+      subst.
+      destruct e as (y, x').
+      apply incoming_true_rw in Hx.
+      subst.
+      exists w1.
+      exists w2.
+      exists y.
+      split; auto.
+      unfold not; intros Hx.
+      rewrite Forall_forall in Hy.
+      rewrite Exists_exists in *.
+      destruct Hx as (e, (Hi, Ho)).
+      apply Hy in Hi.
+      apply incoming_to_true in Ho.
+      rewrite Hi in *.
+      inversion Ho.
+    Qed.
+
+  End SplitWalk.
 
   Lemma walk2_split:
     forall {A:Type} E w (x:A) y a b,
