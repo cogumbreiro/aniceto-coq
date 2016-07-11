@@ -1397,6 +1397,56 @@ Section ConsEdge.
     eauto using reaches_impl, edge_cons.
   Qed.
 
+  Let walk2_inv_cons:
+    forall w (x:A) y z es,
+    Walk2 (Edge ((z,y) :: es)) x y w ->
+    z = x \/ exists w', Walk2 (Edge es) x y w' \/ Walk2 (Edge es) x z w'.
+  Proof.
+    induction w; intros. {
+      apply walk2_nil_inv in H; contradiction.
+    }
+    destruct w. {
+      destruct a as (x', y').
+      assert (x'=x) by eauto using walk2_inv_eq_fst; subst.
+      assert (y'=y) by eauto using walk2_inv_eq_snd; subst.
+      apply walk2_inv_cons in H.
+      destruct H as (v2, (Heq, He)).
+      symmetry in Heq; inversion Heq; subst; clear Heq.
+      inversion He; subst; clear He. {
+        inversion H; subst.
+        intuition.
+      }
+      eauto using edge_to_walk2.
+    }
+    apply walk2_inv in H.
+    destruct H as (v, (Heq, (He, Hw))).
+    subst.
+    destruct He. {
+      inversion H; subst; clear H.
+      intuition.
+    }
+    apply IHw in Hw;auto.
+    destruct Hw as [?|(w',Hx)]. {
+      subst.
+      eauto using edge_to_walk2.
+    }
+    destruct Hx. {
+      eauto using walk2_cons.
+    }
+    eauto using walk2_cons.
+  Qed.
+
+  Lemma reaches_inv_cons_2:
+    forall (x:A) y z es,
+    Reaches (Edge ((z,y) :: es)) x y ->
+    z = x \/ Reaches (Edge es) x y \/ Reaches (Edge es) x z.
+  Proof.
+    intros.
+    destruct H.
+    apply walk2_inv_cons in H.
+    destruct H as [?|(w',[?|?])]; eauto using reaches_def.
+  Qed.
+
 End ConsEdge.
 
 Section RmEdge.
