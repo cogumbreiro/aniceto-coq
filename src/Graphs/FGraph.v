@@ -1447,6 +1447,17 @@ Section ConsEdge.
     destruct H as [?|(w',[?|?])]; eauto using reaches_def.
   Qed.
 
+  Lemma reaches_impl_cons:
+    forall es e (x:A) y,
+    Reaches (Edge es) x y ->
+    Reaches (Edge (e :: es)) x y.
+  Proof.
+    intros.
+    apply reaches_impl with (E:=Edge es); auto; intros.
+    unfold Edge in *.
+    auto using in_cons.
+  Qed.
+
 End ConsEdge.
 
 Section RmEdge.
