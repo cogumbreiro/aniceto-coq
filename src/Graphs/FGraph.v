@@ -279,10 +279,56 @@ Proof.
   eauto using has_incoming_def.
 Qed.
 
-Definition edge_eq_dec := pair_eq_dec eq_dec.
+(** Checks if an edge is in the graph. *)
+
+Lemma is_edge_dec : forall e es, {Edge e es} + {~ Edge e es}.
+Proof.
+  intros.
+  destruct (in_dec (@edge_eq_dec V eq_dec) es e); auto.
+Qed.
+
+Lemma in_edge_dec: forall (v:V) es, {Graph.In (Edge es) v } + {~ Graph.In (Edge es) v }.
+Proof.
+  intros.
+  remember (existsb (fun (e:V*V)=>
+    if (eq_dec (fst e) v) then true else
+    if (eq_dec (snd e) v) then true else false
+  ) es).
+  symmetry in Heqb.
+  destruct b.
+  - rewrite existsb_exists in Heqb.
+    left.
+    destruct Heqb as ((v1,v2), (Hi, He)); simpl in *.
+    destruct (eq_dec v1 v). {
+      subst.
+      eauto using in_left.
+    }
+    destruct (eq_dec v2 v). {
+      subst.
+      eauto using in_right.
+    }
+    inversion He.
+  - right; unfold not; intros.
+    apply existsb_Forall in Heqb.
+    rewrite Forall_forall in *.
+    destruct H as (e, (He,Hi)).
+    apply Heqb in He.
+    destruct e as (v1,v2); simpl in *.
+    destruct Hi; simpl in *; subst.
+    + destruct (eq_dec v1 v1);
+      inversion He;
+      contradiction n; trivial.
+    + destruct (eq_dec v1 v2). {
+        inversion He.
+      }
+      destruct (eq_dec v2 v2). {
+        inversion He.
+      }
+      contradiction n0; trivial.
+Qed.
 
 Definition rm_sources (g:fgraph) :=
-  feedback_filter edge_eq_dec (fun g' e => has_incoming g' (fst e)) g.
+  feedback_filter (edge_eq_dec eq_dec) (fun g' e => has_incoming g' (fst e)) g.
 
 Lemma rm_sources_incl:
   forall g,
@@ -325,7 +371,7 @@ Proof.
   inversion v_in_e.
   - rewrite <- H in e_in_g.
     assumption.
-  - remember (feedback_filter edge_eq_dec _) as rm_g.
+  - remember (feedback_filter (edge_eq_dec eq_dec) _) as rm_g.
     destruct e as (v1, v2).
     simpl in *.
     rewrite <- H in *.
@@ -411,7 +457,7 @@ Proof.
   intros.
   unfold rm_sources in *.
   remember (fun (g' : list (V * V)) e => has_incoming g' (fst e)) as f.
-  functional induction (feedback_filter edge_eq_dec f g).
+  functional induction (feedback_filter (edge_eq_dec eq_dec) f g).
   - assumption.
   - rename l into g.
     remember (fun (g' : list (V * V)) (e0 : V * V) => _) as f.
@@ -656,7 +702,7 @@ Proof.
   intros.
   unfold rm_sources in *.
   remember (fun (g' : list (V * V)) (e : V * V) => _) as fg.
-  functional induction (feedback_filter edge_eq_dec fg g); auto.
+  functional induction (feedback_filter (edge_eq_dec eq_dec) fg g); auto.
   unfold g' in *.
   rename l into g.
   remember (feedback_filter _ _)  as  gf.
@@ -1056,7 +1102,7 @@ Proof.
   intros.
   destruct e as (e, H).
   destruct w as (w, (H1, (H2,H3))).
-  destruct (in_dec edge_eq_dec e w).
+  destruct (in_dec (edge_eq_dec eq_dec) e w).
   - refine (inr (Sig_yes (snd e))).
     split.
     + apply has_incoming_in_snd.
@@ -1075,7 +1121,7 @@ Proof.
 Defined.
 
 Definition lendiff (w:WalkOf) :=
-  set_length edge_eq_dec g - set_length edge_eq_dec (Sig_take w).
+  set_length (edge_eq_dec eq_dec) g - set_length (edge_eq_dec eq_dec) (Sig_take w).
 
 Definition build_cycle: forall (w:WalkOf) (v:BuildCycle (Sig_take w)), CycleOf.
 Proof.
@@ -1103,7 +1149,7 @@ Proof.
   destruct e as ((?,?), ?).
   destruct w as (?, (?, (?,?))).
   simpl in *.
-  destruct (in_dec edge_eq_dec (v, v0)); inversion teq0.
+  destruct (in_dec (edge_eq_dec eq_dec) (v, v0)); inversion teq0.
   destruct w' as (?, (?,(?,?))).
   inversion H0.
   unfold lendiff.

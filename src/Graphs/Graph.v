@@ -1621,6 +1621,18 @@ Section EndsWith.
 
 End EndsWith.
 
+Section EqDec.
+  Variable A:Type.
+
+  Variable eq_dec: forall (x y:A), { x = y } + { x <> y }.
+
+  (** Checks if an edge equals another edge. *)
+
+  Definition edge_eq_dec := pair_eq_dec eq_dec.
+
+End EqDec.
+
+
 Section Walk2.
   Require Import Aniceto.List.
 
@@ -1695,9 +1707,9 @@ Section Walk2.
 
     Definition has_incoming x := existsb (incoming x).
 
-    Let edge_eqb e x := if pair_eq_dec eq_dec e x then true else false.
+    Definition edge_eqb e x := if pair_eq_dec eq_dec e x then true else false.
 
-    Let edge_eqb_rw:
+    Lemma edge_eqb_rw:
       forall e,
       edge_eqb e e = true.
     Proof.
@@ -1709,7 +1721,7 @@ Section Walk2.
       contradiction n; trivial.
     Qed.
 
-    Let edge_eqb_true:
+    Lemma edge_eqb_true:
       forall x y,
       edge_eqb x y = true ->
       x = y.
@@ -1722,7 +1734,7 @@ Section Walk2.
       inversion H.
     Qed.
 
-    Let edge_eqb_false:
+    Lemma edge_eqb_false:
       forall x y,
       edge_eqb x y = false ->
       x <> y.
@@ -1744,7 +1756,7 @@ Section Walk2.
       intros.
       assert (He: Exists (fun x=> edge_eqb e x = true) w). {
         rewrite Exists_exists.
-        eauto.
+        eauto using edge_eqb_rw.
      }
      apply partition_fst in He.
      destruct He as (w1, (w2, (x, (?,(Hx,Hy))))).
@@ -1768,7 +1780,7 @@ Section Walk2.
       intros.
       assert (He: Exists (fun x=> edge_eqb e x = true) w). {
         rewrite Exists_exists.
-        eauto.
+        eauto using edge_eqb_rw.
      }
      apply partition_snd in He.
      destruct He as (w1, (w2, (x, (?,(Hx,Hy))))).
