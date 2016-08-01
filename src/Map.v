@@ -930,6 +930,39 @@ Section Partition.
     destruct mt.
     eauto.
   Qed.
+
+  Lemma partition_in_fst:
+    forall {elt:Type} m m1 m2 k,
+    Partition (elt:=elt) m m1 m2 ->
+    In k m1 ->
+    In k m.
+  Proof.
+    intros.
+    unfold Partition in *.
+    destruct H as (H, Hx).
+    apply in_to_mapsto in H0.
+    destruct H0 as (?, Hm).
+    apply mapsto_to_in with (x).
+    rewrite Hx.
+    auto.
+  Qed.
+
+  Lemma partition_in_snd:
+    forall {elt:Type} m m1 m2 k,
+    Partition (elt:=elt) m m1 m2 ->
+    In k m2 ->
+    In k m.
+  Proof.
+    intros.
+    unfold Partition in *.
+    destruct H as (H, Hx).
+    apply in_to_mapsto in H0.
+    destruct H0 as (?, Hm).
+    apply mapsto_to_in with (x).
+    rewrite Hx.
+    auto.
+  Qed.
+
 End Partition.
 
 Section NotIn.
