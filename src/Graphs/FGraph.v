@@ -285,7 +285,7 @@ Lemma is_edge_dec : forall e es, {Edge e es} + {~ Edge e es}.
 Proof.
   intros.
   destruct (in_dec (@edge_eq_dec V eq_dec) es e); auto.
-Qed.
+Defined.
 
 Lemma in_edge_dec: forall (v:V) es, {Graph.In (Edge es) v } + {~ Graph.In (Edge es) v }.
 Proof.
@@ -325,7 +325,7 @@ Proof.
         inversion He.
       }
       contradiction n0; trivial.
-Qed.
+Defined.
 
 Definition rm_sources (g:fgraph) :=
   feedback_filter (edge_eq_dec eq_dec) (fun g' e => has_incoming g' (fst e)) g.

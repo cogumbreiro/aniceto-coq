@@ -90,7 +90,7 @@ Proof.
   subst. left. auto.
   subst. right. intuition. inversion H. apply n in H1. assumption.
   subst. right. intuition. inversion H. apply n in H1. assumption.
-Qed.
+Defined.
 
 End PAIRS.
 
@@ -113,7 +113,7 @@ Proof.
     inversion H; subst; contradiction n; trivial.
   - subst; right; intuition;
     inversion H; subst; contradiction n; trivial.
-Qed.
+Defined.
 
 Implicit Arguments pair_In.
 Implicit Arguments pair_mem.
