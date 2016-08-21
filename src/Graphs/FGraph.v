@@ -711,19 +711,18 @@ Proof.
     unfold Forall.
     unfold Graph.Forall.
     intros.
-    rewrite Heqfg.
-    rewrite Heqfg in H3.
+    (* -- *)
     unfold AllOutgoing in H.
     unfold Forall in H.
     inversion H3.
     destruct H4.
     unfold Edge in *.
     apply filter_in in H4.
-    apply has_outgoing_filter; repeat auto.
+    apply has_outgoing_filter; auto.
     apply H.
     exists x.
     auto.
-  - rewrite Heqfg.
+  - subst.
     auto using rm_filter_nonempty.
 Qed.
 
