@@ -4,7 +4,7 @@ maintainer: "Tiago Cogumbreiro <cogumbreiro@users.sf.net>"
 authors: "Tiago Cogumbreiro <cogumbreiro@users.sf.net>"
 homepage: "https://bitbucket.org/cogumbreiro/aniceto-coq"
 dev-repo: "https://bitbucket.org/cogumbreiro/aniceto-coq"
-license: "Unlicense"
+license: "Public Domain"
 build: [
   ["coq_makefile" "-f" "_CoqProject" "-o" "Makefile"]
   [make "-j%{jobs}%"]
@@ -15,4 +15,4 @@ depends: [
   "coq" {>= "8.4"}
 ]
 tags: [ "keyword:stdlib" "keyword:stdlib utility" "keyword:common properties" "keyword:graphs" "keyword:graph theory" "category:paths" "category:Computer Science/Decision Procedures and Certified Algorithms/Decision procedures" ]
-
+version: "1.0"
