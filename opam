@@ -1,6 +1,8 @@
 opam-version: "1.1"
 maintainer: "cogumbreiro@users.sf.net"
+name: "coq-aniceto"
 homepage: "https://bitbucket.org/cogumbreiro/aniceto-coq"
+dev-repo: "https://bitbucket.org/cogumbreiro/aniceto-coq"
 license: "Unlicense"
 build: [
   ["coq_makefile" "-f" "_CoqProject" "-o" "Makefile"]
