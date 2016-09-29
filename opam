@@ -4,7 +4,7 @@ version: "1.0"
 maintainer: "Tiago Cogumbreiro <cogumbreiro@users.sf.net>"
 authors: "Tiago Cogumbreiro <cogumbreiro@users.sf.net>"
 homepage: "https://bitbucket.org/cogumbreiro/aniceto-coq"
-dev-repo: "git://bitbucket.org/cogumbreiro/aniceto-coq.git"
+dev-repo: "https://bitbucket.org/cogumbreiro/aniceto-coq.git"
 license: "Public Domain"
 build: [
   ["coq_makefile" "-f" "_CoqProject" "-o" "Makefile"]
