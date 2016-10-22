@@ -1434,7 +1434,7 @@ Section ConsEdge.
     auto using in_cons.
   Qed.
 
-  Lemma reaches_inv_cons:
+  Lemma reaches_cons:
     forall (x:A) y e es,
     Reaches (Edge es) x y ->
     Reaches (Edge (e :: es)) x y.

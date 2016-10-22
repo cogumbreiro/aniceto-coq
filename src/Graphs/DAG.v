@@ -104,7 +104,7 @@ Section Finite.
     assert (Y:=H x).
     unfold not; intros.
     contradiction Y; clear Y.
-    auto using reaches_inv_cons.
+    auto using reaches_cons.
   Qed.
 End Finite.
 
