@@ -1520,6 +1520,28 @@ Section In.
   Qed.
 End In.
 
+Section App.
+  Lemma in_app_split:
+    forall {A} l (x:A),
+    List.In x l ->
+    exists l1 l2, l = l1 ++ (x :: l2).
+  Proof.
+    induction l; intros. {
+      inversion H.
+    }
+    inversion H; subst; clear H. {
+      exists nil; exists l.
+      auto.
+    }
+    apply IHl in H0.
+    destruct H0 as (l1, (l2, R)).
+    subst.
+    exists (a::l1).
+    exists l2.
+    auto.
+  Qed.
+End App.
+
 Section Flip.
   Require Import Aniceto.Pair.
 
