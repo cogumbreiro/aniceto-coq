@@ -142,6 +142,21 @@ Qed.
     - auto.
   Qed.
 
+  Lemma filter_nil_to_forall:
+    forall l,
+    filter f l = nil ->
+    forall x,
+    List.In x l ->
+    f x = false.
+  Proof.
+    intros.
+    apply filter_nil_to_forallb in H.
+    rewrite forallb_forall in H.
+    apply H in H0.
+    apply negb_true_iff in H0.
+    assumption.
+  Qed.
+
   Lemma forallb_to_filter_nil:
     forall l,
     forallb (fun x => negb (f x)) l = true ->
@@ -154,12 +169,36 @@ Qed.
     - auto.
   Qed.
 
+  Lemma forall_to_filter_nil:
+    forall l,
+    (forall x, List.In x l -> f x = false) ->
+    filter f l = nil.
+  Proof.
+    intros.
+    assert (forallb (fun x => negb (f x)) l = true). {
+      rewrite forallb_forall.
+      intros.
+      apply H in H0.
+      apply negb_true_iff in H0.
+      assumption.
+    }
+    auto using forallb_to_filter_nil.
+  Qed.
+
   Lemma filter_forallb_false:
     forall l,
     filter f l = nil <->
     forallb (fun x => negb (f x)) l = true.
   Proof.
-    split; intros; auto using filter_nil_to_forallb, forallb_to_filter_nil.
+    split; auto using filter_nil_to_forallb, forallb_to_filter_nil.
+  Qed.
+
+  Lemma filter_forall_false:
+    forall l,
+    filter f l = nil <->
+    (forall x, List.In x l -> f x = false).
+  Proof.
+    split; eauto using filter_nil_to_forall, forall_to_filter_nil.
   Qed.
 
   Lemma notin_contract:

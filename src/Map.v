@@ -336,6 +336,42 @@ Module MapUtil (Import M:FMapInterface.WS).
     apply k_eq; assumption.
   Qed.
 
+  Lemma filter_elements_nil_to_forall
+      {elt:Type}
+      (k_eq: forall k k', E.eq k k' <-> k = k'):
+    forall (f:(key * elt)%type -> bool) (m:t elt),
+    filter_elements f m = nil -> (forall k e, MapsTo k e m -> f (k, e) = false).
+  Proof.
+    unfold filter_elements; intros.
+    rewrite List.filter_forall_false in H.
+    apply maps_to_impl_in_elements in H0.
+    destruct H0 as (?, (Heq, Hi)).
+    rewrite k_eq in *; subst.
+    auto.
+  Qed.
+
+  Lemma forall_to_filter_elements_nil
+      {elt:Type}
+      (k_eq: forall k k', E.eq k k' <-> k = k'):
+    forall (f:(key * elt)%type -> bool) (m:t elt),
+    (forall k e, MapsTo k e m -> f (k, e) = false) ->
+    filter_elements f m = nil.
+  Proof.
+    unfold filter_elements; intros.
+    apply List.forall_to_filter_nil; intros.
+    destruct x as (k, e).
+    auto using in_elements_impl_maps_to.
+  Qed.
+
+  Lemma filter_elements_nil_spec
+      {elt:Type}
+      (k_eq: forall k k', E.eq k k' <-> k = k'):
+    forall (f:(key * elt)%type -> bool) (m:t elt),
+    filter_elements f m = nil <-> (forall k e, MapsTo k e m -> f (k, e) = false).
+  Proof.
+    split; eauto using forall_to_filter_elements_nil, filter_elements_nil_to_forall.
+  Qed.
+
   Lemma filter_preserves_ina {elt:Type}:
     forall a f l,
     InA (eq_key (elt:=elt)) a (List.filter f l) ->
@@ -408,6 +444,64 @@ Module MapUtil (Import M:FMapInterface.WS).
       auto.
    - apply k_eq.
    - apply filter_elements_nodupa; repeat auto.
+  Qed.
+
+  Lemma filter_empty_to_forall
+      {elt:Type}
+      (k_eq: forall k k', E.eq k k' <-> k = k'):
+    forall (f:key -> elt -> bool) (m:t elt),
+    Empty (filter f m) -> (forall k e, MapsTo k e m -> f k e = false).
+  Proof.
+    unfold Empty; intros.
+    remember (f k e).
+    symmetry in Heqb.
+    destruct b; auto.
+    assert (Hi: MapsTo k e m /\ f k e = true) by auto.
+    apply filter_spec in Hi; auto.
+    apply H in Hi.
+    contradiction.
+  Qed.
+
+  Lemma forall_to_filter_empty
+      {elt:Type}
+      (k_eq: forall k k', E.eq k k' <-> k = k'):
+    forall (f:key -> elt -> bool) (m:t elt),
+    (forall k e, MapsTo k e m -> f k e = false) ->
+    Empty (filter f m).
+  Proof.
+    unfold Empty, not; intros.
+    rewrite filter_spec in H0; auto.
+    destruct H0.
+    apply H in H0.
+    rewrite H0 in *.
+    inversion H1.
+  Qed.
+
+  Lemma empty_filter_spec
+      {elt:Type}
+      (k_eq: forall k k', E.eq k k' <-> k = k'):
+    forall (f:key -> elt -> bool) (m:t elt),
+    Empty (filter f m) <-> forall k e, MapsTo k e m -> f k e = false.
+  Proof.
+    split; eauto using filter_empty_to_forall, forall_to_filter_empty.
+  Qed.
+
+  (** Decidable in *)
+
+  Lemma ind:
+    forall {elt:Type} (m:t elt),
+    { k | In k m } + { _ : unit | Empty m }.
+  Proof.
+    intros elt.
+    apply map_induction with (elt:=elt); intros. {
+      right.
+      exists tt.
+      assumption.
+    }
+    left.
+    exists x.
+    unfold In.
+    eauto using add_mapsto_eq.
   Qed.
 
   Lemma in_choice:
@@ -495,8 +589,45 @@ Module MapUtil (Import M:FMapInterface.WS).
       intuition.
     }
     contradiction H1.
-  Qed.
+  Defined.
 
+  (** Decidable exists: either there is an element such that [f k v = true],
+  in which case we return that [(k,v)], otherwise, we return unit 
+  and the proof that there is no element that satisfies [f k v = true]. *)
+
+  Definition exists_dec {elt:Type} (_ : forall k k' : E.t, E.eq k k' <-> k = k')
+  (f: key -> elt -> bool)
+  (m:t elt)
+  :
+  { x : (key * elt) | MapsTo (fst x) (snd x) m /\ f (fst x) (snd x) = true }
+  +
+  { _ : unit | forall k v, MapsTo k v m -> f k v = false }.
+  Proof.
+    intros.
+    destruct (ind (filter f m)). {
+      left.
+      remember (find (proj1_sig s) (filter f m)).
+      symmetry in Heqo.
+      destruct o. {
+        exists (proj1_sig s, e).
+        destruct s; simpl in *.
+        unfold In in i.
+        destruct i as (i, Hmt).
+        rewrite <- find_mapsto_iff in *.
+        assert (i = e) by eauto using F.MapsTo_fun; subst.
+        apply filter_spec in Hmt; auto.
+      }
+      apply not_find_in_iff in Heqo.
+      contradiction Heqo.
+      destruct s.
+      auto.
+    }
+    right.
+    exists tt.
+    intros.
+    destruct s.
+    rewrite empty_filter_spec in e; auto.
+  Defined.
 
   Definition keys {elt:Type} (m:t elt) : list key :=  fst (split (elements m)).
 
@@ -637,7 +768,7 @@ Module MapUtil (Import M:FMapInterface.WS).
         apply keys_spec; auto.
       }
       contradiction H0.
-  Qed.
+  Defined.
 
   Definition values {elt:Type} (m:t elt) : list elt :=  snd (split (elements m)).
 
