@@ -1229,9 +1229,9 @@ Proof.
 Qed.
 End FGRAPHS.
 
-Implicit Arguments subgraph.
-Implicit Arguments HasIncoming.
-Implicit Arguments HasOutgoing.
+Arguments subgraph: default implicits.
+Arguments HasIncoming: default implicits.
+Arguments HasOutgoing: default implicits.
 
 Section Edge.
 

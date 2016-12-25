@@ -2,6 +2,7 @@ Require Coq.FSets.FMapFacts.
 Require Coq.FSets.FMapInterface.
 Require Import Coq.Lists.SetoidList.
 
+Require Coq.Structures.OrderedType.
 Require Aniceto.List.
 
 Lemma ina_to_in:
@@ -488,7 +489,7 @@ Module MapUtil (Import M:FMapInterface.WS).
 
   (** Decidable in *)
 
-  Lemma ind:
+  Lemma any_in_dec:
     forall {elt:Type} (m:t elt),
     { k | In k m } + { _ : unit | Empty m }.
   Proof.
@@ -502,7 +503,7 @@ Module MapUtil (Import M:FMapInterface.WS).
     exists x.
     unfold In.
     eauto using add_mapsto_eq.
-  Qed.
+  Defined.
 
   Lemma in_choice:
     forall {elt:Type} (m:t elt),
@@ -525,7 +526,7 @@ Module MapUtil (Import M:FMapInterface.WS).
       apply add_mapsto_eq with (k:=x) in H1.
       assumption.
       auto.
-  Qed.
+  Defined.
 
   Lemma nonempty_in:
     forall {elt:Type} (m:t elt),
@@ -604,7 +605,7 @@ Module MapUtil (Import M:FMapInterface.WS).
   { _ : unit | forall k v, MapsTo k v m -> f k v = false }.
   Proof.
     intros.
-    destruct (ind (filter f m)). {
+    destruct (any_in_dec (filter f m)). {
       left.
       remember (find (proj1_sig s) (filter f m)).
       symmetry in Heqo.
@@ -1096,7 +1097,7 @@ Section Partition.
 End Partition.
 
 Section NotIn.
-  Require Import Coq.Structures.OrderedType.
+  Import Coq.Structures.OrderedType.
   Variable elt:Type.
   Variable zero: E.t.
   Variable next: E.t -> E.t.

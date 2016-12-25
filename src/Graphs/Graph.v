@@ -1007,16 +1007,16 @@ Proof.
   split; repeat (apply cycle_impl; apply H).
 Qed.
 
-Implicit Arguments Cycle.
-Implicit Arguments Walk.
-Implicit Arguments Linked.
-Implicit Arguments Connected.
-Implicit Arguments End.
-Implicit Arguments In.
-Implicit Arguments cycle_def.
-Implicit Arguments StartsWith.
-Implicit Arguments EndsWith.
-Implicit Arguments ends_with_cons.
+Arguments Cycle : default implicits.
+Arguments Walk: default implicits.
+Arguments Linked: default implicits.
+Arguments Connected: default implicits.
+Arguments End: default implicits.
+Arguments In: default implicits.
+Arguments cycle_def: default implicits.
+Arguments StartsWith: default implicits.
+Arguments EndsWith: default implicits.
+Arguments ends_with_cons: default implicits.
 
 (** Subgraph relation *)
 
@@ -1125,8 +1125,8 @@ Proof.
 Qed.
 
 End SUBGRAPH.
-Implicit Arguments Forall.
-Implicit Arguments subgraph.
+Arguments Forall: default implicits.
+Arguments subgraph: default implicits.
 
 Section CLOS_TRANS.
 

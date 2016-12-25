@@ -115,10 +115,11 @@ Proof.
     inversion H; subst; contradiction n; trivial.
 Defined.
 
+(*
 Implicit Arguments pair_In.
 Implicit Arguments pair_mem.
 Implicit Arguments pair_eq_dec.
-
+*)
 
 Section Flip.
 

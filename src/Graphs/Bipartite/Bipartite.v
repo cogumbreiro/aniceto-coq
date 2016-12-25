@@ -1,3 +1,5 @@
+Set Implicit Arguments.
+
 Require Import Aniceto.Graphs.Graph.
 
 Section Bipartite.
@@ -852,6 +854,7 @@ Qed.
 
 End CycleAtoC.
 End Bipartite.
+(*
 Implicit Arguments a_to_c.
 Implicit Arguments a_to_b.
 Implicit Arguments bi_a_vertex.
@@ -860,6 +863,7 @@ Implicit Arguments AA.
 Implicit Arguments BB.
 Implicit Arguments BAB.
 Implicit Arguments ABA.
+*)
 
 Lemma aa_eq_rev_bb:
   forall {A} {B} AB BA e,

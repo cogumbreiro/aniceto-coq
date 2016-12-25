@@ -378,7 +378,7 @@ Qed.
 End LISTS.
 
 
-Implicit Arguments filter_inv.
+Arguments filter_inv : default implicits.
 
 Section FEEDBACK.
 Variable A:Type.
@@ -916,9 +916,9 @@ Section NoDupA.
   Qed.
 End NoDupA.
 
-Implicit Arguments filter_incl.
-Implicit Arguments feedback_filter.
-Implicit Arguments feedback_filter_equation.
+Arguments filter_incl : default implicits.
+Arguments feedback_filter : default implicits.
+Arguments feedback_filter_equation : default implicits.
 
 
 Section FindProps.
