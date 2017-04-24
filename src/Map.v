@@ -630,6 +630,38 @@ Module MapUtil (Import M:FMapInterface.WS).
     rewrite empty_filter_spec in e; auto.
   Defined.
 
+  Definition lookup_dec {elt:Type} (X : forall k k' : E.t, E.eq k k' <-> k = k')
+  (k: key)
+  (m:t elt)
+  :
+  { v : elt | MapsTo k v m }
+  +
+  { _ : unit | ~ In k m }.
+  Proof.
+    destruct (exists_dec X (fun y e => if eq_dec k y then true else false) m). {
+      left.
+      destruct s as (p, (mt,?)).
+      destruct (F.eq_dec k (fst p)). {
+        apply X in e; subst.
+        eauto using exist.
+      }
+      inversion H.
+    }
+    right.
+    destruct s.
+    apply exist with (x:=tt).
+    unfold not; intros.
+    unfold In in *.
+    destruct H as (?, mt).
+    apply e in mt.
+    destruct (F.eq_dec k k). {
+      inversion mt.
+    }
+    contradiction n.
+    rewrite X.
+    trivial.
+  Defined.
+
   Definition keys {elt:Type} (m:t elt) : list key :=  fst (split (elements m)).
 
   Lemma keys_spec_1:
