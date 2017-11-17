@@ -279,7 +279,7 @@ Inductive a_to_b : a_walk -> b_walk -> Prop :=
     edge_a_to_b e1 e2 e ->
     a_to_b (e1 :: e2 :: aw)%list (e :: bw).
 
-Lemma a_to_b_total_nil:
+Let a_to_b_total_nil:
   exists bw : b_walk, a_to_b nil bw /\ BWalk bw.
 Proof.
   exists nil.
@@ -288,7 +288,7 @@ Proof.
   apply walk_nil.
 Qed.
 
-Lemma a_to_b_total_edge:
+Let a_to_b_total_edge:
   forall a1 a2,
   AWalk ((a1, a2) :: nil)%list ->
   exists bw : b_walk, a_to_b ((a1, a2) :: nil)%list bw /\ BWalk bw.
@@ -408,7 +408,7 @@ Proof.
     auto.
 Qed.
 
-Lemma a_to_b_total_step:
+Let a_to_b_total_step:
   forall a1 a2 a3 aw bw,
   AWalk ((a1, a2) :: ((a2, a3) :: aw)%list) ->
   a_to_b ((a2, a3) :: aw)%list bw ->
@@ -417,14 +417,14 @@ Lemma a_to_b_total_step:
   a_to_b ((a1, a2) :: ((a2, a3) :: aw)%list)%list bw' /\ BWalk bw'.
 Proof.
   intros.
-  assert (H3: AA (a1, a2)).
-  inversion H; subst; assumption.
+  assert (H3: AA (a1, a2)). {
+    inversion H; subst; assumption.
+  }
   inversion H0.
   - (* Case 1: *)
     subst.
-    assert (Hr := H).
-    apply a_walk_to_edge_a_to_b in Hr.
-    destruct Hr as (b1, (b2, Hr)).
+    edestruct a_walk_to_edge_a_to_b as (b1, (b2, Hr));
+      eauto using a_walk_to_edge_a_to_b.
     exists (cons (b1, b2) nil).
     intuition.
     + auto using a_to_b_cons.
@@ -433,8 +433,8 @@ Proof.
     subst.
     destruct e2 as (a3', a4).
     inversion H7; subst. (* a3 = a3' *)
-    apply a_to_aba in H3; destruct H3 as (r0, H3).
-    exists ((r0, b1) :: (b1, b2):: bw0)%list.
+    destruct a_to_aba with (a1:=a1) (a2:=a2) as (b0, ?); auto.
+    exists ((b0, b1) :: (b1, b2):: bw0)%list.
     auto using a_to_b_b_walk_cons.
 Qed.
 
