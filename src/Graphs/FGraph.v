@@ -1,6 +1,7 @@
 Require Import Coq.Lists.List.
 Require Import Coq.Lists.ListSet.
 Require Import Coq.Bool.Bool.
+Require Import Coq.funind.Recdef. (* https://github.com/AbsInt/CompCert/pull/191 *)
 
 Require Import Aniceto.Graphs.Graph.
 Require Import Aniceto.Pair.
