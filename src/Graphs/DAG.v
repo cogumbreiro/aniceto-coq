@@ -531,7 +531,7 @@ Section Props.
     rewrite find_path_equation in *.
     remember (find_outgoing _ _).
     symmetry in Heqo.
-    destruct o as [(?,?)|?]. {
+    destruct o as [(?,?)|]. {
       apply find_outgoing_some in Heqo.
       destruct Heqo.
       subst.
