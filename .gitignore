@@ -6,3 +6,4 @@ Makefile
 *\#
 /Makefile.bak
 *.aux
+/Makefile.conf
