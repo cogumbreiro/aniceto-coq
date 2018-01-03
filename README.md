@@ -6,7 +6,7 @@ theoretical results.
 The name of this library is in memory of the Portuguese mathematician
 [Antonio Aniceto Monteiro](https://en.wikipedia.org/wiki/Antonio_Monteiro_(mathematician)).
 
-## List utilities
+# Table of contents
 
 * [List.v](src/List.v) 
   includes lemmas about functions such as:
