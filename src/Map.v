@@ -257,7 +257,7 @@ Module MapUtil (Import M:FMapInterface.WS).
     In k m.
   Proof.
     intros.
-    rewrite elements_in_iff.
+    rewrite F.elements_in_iff.
     exists e.
     apply InA_altdef.
     apply Exists_exists.
