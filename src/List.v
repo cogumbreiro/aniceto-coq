@@ -1,3 +1,5 @@
+Set Implicit Arguments.
+
 Require Import Coq.Lists.ListSet.
 Require Import Coq.Lists.List.
 Require Import Coq.Bool.Bool.
@@ -1775,7 +1777,7 @@ Section Partition.
 
   (** Find a pivot according to a predicate [f] such that
       the predicate is false for a portion of the list. *)
-      
+
   Lemma partition_snd:
     forall {A:Type} l f,
     Exists (fun x => f x = true) l ->
@@ -1847,3 +1849,218 @@ Section Partition.
   Qed.
 
 End Partition.
+
+Section TailRecursiveMap.
+  Import ListNotations.
+
+  Variable A:Type.
+  Variable B:Type.
+  Variable f: A -> B.
+
+  (**
+   Tail recursive reverse, which is useful for performance sake.
+   *)
+
+  Definition rev_tr {A} (l:list A) := rev_append l nil.
+
+  Lemma rev_tr_rw:
+    forall {A} (l:list A),
+    rev_tr l = rev l.
+  Proof.
+    intros.
+    unfold rev_tr.
+    rewrite rev_alt.
+    trivial.
+  Qed.
+
+  (** Similar to List.rev_append this is the tail-recursive map application
+    with an accumulator. *)
+
+  Fixpoint tail_map (l:list A) a : list B := match l with
+  | nil => a
+  | h :: t => tail_map t (f h :: a)
+  end.
+
+  Lemma tail_map_rw:
+    forall x l,
+    tail_map x l = rev (map f x) ++ l.
+  Proof.
+    induction x; intros; simpl. {
+      auto using app_nil_end.
+    }
+    rewrite IHx.
+    rewrite <- app_assoc.
+    rewrite <- app_comm_cons.
+    simpl.
+    trivial.
+  Qed.
+
+  (** Tail-recursive List.map equivalent. *)
+
+  Definition map_tr l := rev_tr (tail_map l nil).
+
+  Lemma map_tr_rw:
+    forall l,
+    map_tr l = map f l.
+  Proof.
+    intros.
+    unfold map_tr.
+    rewrite tail_map_rw.
+    rewrite <- app_nil_end.
+    rewrite rev_tr_rw.
+    auto using rev_involutive.
+  Qed.
+
+  Fixpoint concat_append l a : list A :=
+  match l with
+  | nil => a
+  | x::l => concat_append l (rev_append x a)
+  end.
+
+  Lemma concat_append_rw:
+    forall l a,
+    concat_append l a = rev (concat l) ++ a.
+  Proof.
+    induction l; intros; simpl; auto using app_nil_end.
+    rewrite rev_append_rev.
+    rewrite IHl, rev_app_distr.
+    rewrite app_assoc.
+    trivial.
+  Qed.
+
+  (** Tail-recursive [concat] *)
+
+  Definition concat_tr l := rev_tr (concat_append l nil).
+
+  Lemma concat_tr_rw:
+    forall l,
+    concat_tr l = concat l.
+  Proof.
+    intros; unfold concat_tr; simpl.
+    rewrite rev_tr_rw in *.
+    rewrite concat_append_rw.
+    rewrite <- rev_involutive.
+    rewrite <- app_nil_end.
+    trivial.
+  Qed.
+
+End TailRecursiveMap.
+
+Section TailRecursiveFlatMap.
+  Import ListNotations.
+
+  Variable A:Type.
+  Variable B:Type.
+  Variable f: A -> list B.
+
+  (** Tail-recursive [flat_map]. *)
+
+  Definition flat_map_tr l := concat_tr (map_tr f l).
+
+  Lemma flat_map_tr_rw:
+    forall l,
+    flat_map_tr l = flat_map f l.
+  Proof.
+    intros.
+    unfold flat_map_tr.
+    rewrite concat_tr_rw, map_tr_rw, flat_map_concat_map.
+    trivial.
+  Qed.
+
+End TailRecursiveFlatMap.
+
+Section SplitTailRecursive.
+  Import ListNotations.
+  Variable A:Type.
+  Variable B:Type.
+  Fixpoint split_tail l a b : (list A * list B) :=
+  match l with
+  | [] => (a, b)
+  | (x, y) :: l => split_tail l (x::a) (y::b)
+  end.
+
+  Lemma split_tail_rw:
+    forall (l:list (A*B)) (a:list A) (b:list B),
+    split_tail l a b = let (la, lb) := split l in (rev la ++ a, rev lb ++ b).
+  Proof.
+    induction l; intros; simpl; auto using app_nil_end.
+    destruct a as (a1, b1); simpl.
+    rewrite IHl.
+    remember (split l) as m.
+    destruct m as (la, lb).
+    simpl.
+    repeat rewrite app_assoc_reverse.
+    simpl.
+    trivial.
+  Qed.
+
+  Definition split_tr l := split_tail (rev l) [] [].
+
+  Lemma split_app:
+    forall (a:list (A*B)) b,
+    let (la, lb) := split (a ++ b) in
+    let (la1, lb1) := split a in
+    let (la2, lb2) := split b in
+    (la, lb) = (la1 ++ la2, lb1 ++ lb2).
+  Proof.
+    induction a; intros; simpl. {
+      remember (split b) as l.
+      destruct l as (l1, l2).
+      trivial.
+    }
+    destruct a as (x,y).
+    remember (split (a0++b)) as m.
+    destruct m as (l1, l2).
+    remember (split a0) as m.
+    destruct m as (x1, y1).
+    remember (split b) as m.
+    destruct m as (x2, y2).
+    simpl.
+    assert (Hx := IHa b).
+    rewrite <- Heqm in Hx.
+    rewrite <- Heqm1 in Hx.
+    inversion Hx; subst.
+    trivial.
+  Qed.
+
+  Lemma split_rev:
+    forall (l:list (A*B)),
+    let (x, y) := split (rev l) in
+    let (a, b) := split l in
+    (rev a, rev b) = (x, y).
+  Proof.
+    induction l; intros; simpl; auto.
+    assert (Hx := split_app (rev l) [a]).
+    remember (split (rev l ++ [a])) as m.
+    destruct m as (l1, l2).
+    destruct a as (a1, b1).
+    simpl in *.
+    remember (split l) as m.
+    destruct m as (l3, l4); simpl.
+    remember (split (rev l)) as m.
+    destruct m as (l5, l6).
+    inversion Hx; subst.
+    inversion IHl; subst.
+    trivial.
+  Qed.
+
+  Lemma split_tr_rw:
+    forall l,
+    split_tr l = split l.
+  Proof.
+    intros.
+    unfold split_tr.
+    rewrite split_tail_rw.
+    remember (split (rev l)) as m.
+    destruct m as (la, lb).
+    repeat rewrite <- app_nil_end.
+    assert (Hx := split_rev l).
+    rewrite <- Heqm in *.
+    remember (split l) as m.
+    destruct m as (l1, l2).
+    inversion Hx; subst.
+    repeat rewrite rev_involutive.
+    trivial.
+  Qed.
+
+End SplitTailRecursive.
