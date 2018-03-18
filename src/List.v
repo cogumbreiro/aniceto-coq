@@ -2064,3 +2064,23 @@ Section SplitTailRecursive.
   Qed.
 
 End SplitTailRecursive.
+
+Section AppTailRecursive.
+  Import ListNotations.
+  Variable A:Type.
+
+  Definition app_tr (a:list A) b := rev_append (rev a) b.
+
+  Lemma app_tr_rw:
+    forall a b,
+    app_tr a b = app a b.
+  Proof.
+    induction a; intros; simpl; auto.
+    unfold app_tr.
+    rewrite rev_append_rev.
+    rewrite rev_involutive.
+    simpl.
+    trivial.
+  Qed.
+
+End AppTailRecursive.

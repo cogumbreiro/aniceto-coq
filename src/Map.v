@@ -805,6 +805,20 @@ Module MapUtil (Import M:FMapInterface.WS).
 
   Definition values {elt:Type} (m:t elt) : list elt :=  snd (split (elements m)).
 
+  (** Tail-recursive version of values. *)
+
+  Definition values_tr {elt:Type} (m:t elt) : list elt :=  snd (List.split_tr (elements m)).
+
+  Lemma values_tr_rw:
+    forall elt (m:t elt),
+    values m = values_tr m.
+  Proof.
+    intros.
+    unfold values, values_tr.
+    rewrite List.split_tr_rw.
+    trivial.
+  Qed.
+
   Lemma values_spec_1:
     forall {elt:Type} (m:t elt) (e:elt),
     List.In e (values m) ->
