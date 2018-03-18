@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cogumbreiro/aniceto-coq.svg?branch=master)](https://travis-ci.org/cogumbreiro/aniceto-coq)
+
 # About
 
 A library of utilities that extends the standard library, plus some graph-
