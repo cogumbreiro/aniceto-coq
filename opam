@@ -7,7 +7,7 @@ homepage: "https://bitbucket.org/cogumbreiro/aniceto-coq"
 dev-repo: "https://bitbucket.org/cogumbreiro/aniceto-coq.git"
 license: "Public Domain"
 build: [
-  ["coq_makefile" "-f" "_CoqProject" "-o" "Makefile"]
+  ["./configure.sh"]
   [make "-j%{jobs}%"]
 ]
 bug-reports: "https://gitlab.com/cogumbreiro/aniceto-coq/issues"
