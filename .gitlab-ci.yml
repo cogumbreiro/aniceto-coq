@@ -1,6 +1,7 @@
 image: ocaml/opam:alpine_ocaml-4.06.0
 
 before_script:
+  - eval `opam config env`
   - ./configure.sh
 
 test:
