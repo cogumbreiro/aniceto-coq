@@ -1,10 +1,15 @@
 language: c
 
-sudo: required
+addons:
+  apt:
+    packages:
+      - ocaml
+      - opam
 
 install:
-  - wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-opam.sh
-  - bash -ex .travis-opam.sh
+  - opam init --yes --no-setup --compiler=$OCAML_VERSION
+  - eval $(opam config env)
+  - opam update
   - ./configure.sh
 
 script:
