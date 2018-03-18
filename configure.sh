@@ -7,7 +7,7 @@ check_pkg() {
 install_coq() {
   echo "Installing Coq over OPAM..."
   opam repo add coq-released https://coq.inria.fr/opam/released &&
-  (opam install coq || true)
+  (opam install -y coq || true)
 }
 
 (check_pkg coq-shell || install_coq) &&
