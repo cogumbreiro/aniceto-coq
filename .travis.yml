@@ -11,6 +11,6 @@ script:
   - make
 
 env:
-  - OCAML_VERSION=latest
+  - OCAML_VERSION=4.06.1
 
 
