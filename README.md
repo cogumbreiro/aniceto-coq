@@ -21,6 +21,9 @@ The name of this library is in memory of the Portuguese mathematician
     Defines `omap` which combines `map` with `filter`.
     
     Defines a `supremum`.
+    
+    We also reimplement `List` operations with tail-recursive algorithms,
+    which is beneficial for extracting to OCaml.
 
 * [Map.v](src/Map.v). Defines `keys` and `values`. Adds conversion between
     `MapsTo` and `In`. Lemmas about `elements`, `filter`, `partition`.
