@@ -5,14 +5,16 @@ addons:
       - opam
     sources:
       - avsm
+
 before_cache:
   - rm -rf ~/.opam/log/
+
 cache:
   directories:
     - $HOME/.opam
 env:
   - OCAML_VERSION=4.05.0 COQ_VERSION=8.7.2 OPAMYES=yes
-#  - OCAML_VERSION=4.05.0 COQ_VERSION=8.6.1
+
 install:
   - opam init -n --compiler=$OCAML_VERSION
   - eval `opam config env`
