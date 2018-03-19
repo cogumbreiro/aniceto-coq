@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/cogumbreiro/aniceto-coq.svg?branch=master)](https://travis-ci.org/cogumbreiro/aniceto-coq)
+[![pipeline status](https://gitlab.com/cogumbreiro/aniceto-coq/badges/master/pipeline.svg)](https://gitlab.com/cogumbreiro/aniceto-coq/commits/master)
 
 # About
 
