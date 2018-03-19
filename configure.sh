@@ -5,11 +5,15 @@ check_pkg() {
 }
 
 install_coq() {
-  echo "Installing Coq over OPAM..."
-  opam repo add coq-released https://coq.inria.fr/opam/released &&
-  (opam install -y coq || true)
+  if ! which coqc > /dev/null; then
+    echo "Installing Coq over OPAM..."
+    if ! check_pkg coq; then
+      opam repo add coq-released https://coq.inria.fr/opam/released
+    fi
+    opam install coq
+  fi
 }
 
-(check_pkg coq-shell || install_coq) &&
+install_coq &&
 (test -f Makefile || coq_makefile -f _CoqProject -o Makefile)
 
