@@ -37,8 +37,14 @@ To install a local version of this software do:
 make install
 ```
 
+Alternatively, you can install Aniceto via OPAM:
+```
+opam pin add --dev-repo coq-aniceto https://gitlab.com/cogumbreiro/aniceto-coq.git
+```
+
 # Projects that use Aniceto
 
-* https://github.com/cogumbreiro/habanero-coq
-* https://gitlab.com/cogumbreiro/gorn-coq
+* https://github.com/cogumbreiro/habanero-coq --- A formalization of the Habanero programming model
+* https://gitlab.com/cogumbreiro/gorn-coq --- A deadlock avoidance policy for futures
+* https://gitlab.com/cogumbreiro/brenner-coq --- A deadlock detection algorithm for group-synchronization
 
