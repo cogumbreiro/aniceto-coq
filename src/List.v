@@ -6,6 +6,9 @@ Require Import Coq.Bool.Bool.
 Require Import Coq.funind.Recdef. (* Required by Function *)
 Require Import Coq.Arith.Wf_nat. (* Required implicitly by measure obligations *)
 
+Require Aniceto.Pair.
+Require Coq.Structures.OrderedType.
+
 Section LISTS.
 
 Variable A:Type.
@@ -1584,7 +1587,7 @@ Section App.
 End App.
 
 Section Flip.
-  Require Import Aniceto.Pair.
+  Import Aniceto.Pair.
 
   Lemma in_map_flip_1:
     forall {A:Type} es (x y:A),
@@ -1632,7 +1635,7 @@ Section Flip.
 End Flip.
 
 Section FindNotIn.
-  Require Import Coq.Structures.OrderedType.
+  Import Coq.Structures.OrderedType.
 
   Variable A:Type.
 

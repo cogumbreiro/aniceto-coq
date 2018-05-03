@@ -6,6 +6,9 @@ Require Import Coq.Lists.List.
 
 Require Import Aniceto.Graphs.FGraph.
 
+Require Aniceto.List.
+Require Aniceto.Pair.
+
 Section Dag.
   Variable A:Type.
   Variable Lt: A * A -> Prop.
@@ -164,8 +167,8 @@ Section Props.
     inversion H.
   Qed.
 
-  Require Import Coq.Lists.List.
-  Require Import Aniceto.List.
+  Import Coq.Lists.List.
+  Import Aniceto.List.
 
   Let find_fst_eq_some:
     forall x es e,
@@ -179,7 +182,7 @@ Section Props.
     intuition.
   Qed.
 
-  Require Import Aniceto.Pair.
+  Import Aniceto.Pair.
 
   Let find_outgoing x (es:list(A*A)) :=
   find (fst_eq x) es.
@@ -641,6 +644,8 @@ Section Props.
 End Props.
 
 Section Infinum.
+  Import Aniceto.Pair.
+  Import Aniceto.List.
 
   Variable A:Type.
 
@@ -707,6 +712,7 @@ Section Infinum.
 End Infinum.
 
 Section Walk2.
+  Import Aniceto.List.
 
   Lemma fdag_walk2_inv_0 {A}:
     forall w (x:A) y z es,

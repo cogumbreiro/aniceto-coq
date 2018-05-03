@@ -4,6 +4,9 @@ Require Import Aniceto.Set.
 Require Import Aniceto.Map.
 Require Import Aniceto.List.
 
+Require Recdef. (* Required by Function *)
+Require Coq.Arith.Wf_nat. (* Required implicitly by measure obligations *)
+
 Set Implicit Arguments.
 
 Section MATCH.
@@ -160,8 +163,8 @@ Proof.
 Qed.
 
 
-Require Import Recdef. (* Required by Function *)
-Require Import Coq.Arith.Wf_nat. (* Required implicitly by measure obligations *)
+Import Recdef. (* Required by Function *)
+Import Coq.Arith.Wf_nat. (* Required implicitly by measure obligations *)
 
 Function unproj (l:list (K*V)) {measure length l} : list (K * (list V)) :=
   match l with

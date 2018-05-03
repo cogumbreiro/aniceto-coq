@@ -3,6 +3,13 @@ Require Import Coq.Lists.List.
 Require Import Aniceto.Tactics.
 Require Import Aniceto.Pair.
 
+Require Coq.Relations.Relations.
+Require Coq.Relations.Relation_Operators.
+Require Coq.Arith.Wf_nat.
+Require Coq.funind.Recdef.
+
+Require Aniceto.List.
+
 Set Implicit Arguments.
 
 Section Walk.
@@ -1130,7 +1137,7 @@ Arguments subgraph: default implicits.
 
 Section CLOS_TRANS.
 
-Require Import Coq.Relations.Relations.
+Import Coq.Relations.Relations.
 
 Variable A:Type.
 Variable Edge: (A * A) % type -> Prop.
@@ -1189,6 +1196,8 @@ Qed.
 End CLOS_TRANS.
 
 Section PROPS.
+  Import Coq.Relations.Relations.
+
   Lemma clos_trans_impl:
     forall {A:Type} (P Q: relation A),
     (forall x y, P x y -> Q x y) ->
@@ -1344,7 +1353,7 @@ Section PROPS.
     eauto using walk2_concat, reaches_def.
   Qed.
 
-  Require Import Coq.Relations.Relation_Operators.
+  Import Coq.Relations.Relation_Operators.
 
   (** Reflexive closure of continue. *)
 
@@ -1448,8 +1457,8 @@ Section PROPS.
 End PROPS.
 
 Section EndsWith.
-  Require Import Coq.Arith.Wf_nat.
-  Require Import Coq.funind.Recdef.
+  Import Coq.Arith.Wf_nat.
+  Import Coq.funind.Recdef.
 
   Function find_end {A:Type} (l:list A) { measure length l} : option A :=
   match l with
@@ -1634,7 +1643,7 @@ End EqDec.
 
 
 Section Walk2.
-  Require Import Aniceto.List.
+  Import Aniceto.List.
 
   Lemma walk2_inv_eq_fst:
     forall {A:Type} E (x y x' z:A) w,

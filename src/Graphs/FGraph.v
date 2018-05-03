@@ -1507,8 +1507,8 @@ Section ConsEdge.
 End ConsEdge.
 
 Section RmEdge.
-  Require Import Aniceto.Pair.
-  Require Import Aniceto.List.
+  Import Aniceto.Pair.
+  Import Aniceto.List.
 
   Variable A:Type.
   Variable eq_dec: forall (x y:A), {x = y} + {x <> y}.
